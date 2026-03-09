@@ -18,6 +18,11 @@ export default function Navbar() {
           {user ? (
             <>
               <Link to="/dashboard" className="hover:text-squash-secondary">Dashboard</Link>
+              {(user.role === 'regulator' || user.role === 'organiser') && (
+                <Link to="/developer-resources" className="hover:text-squash-secondary font-semibold text-squash-accent">
+                  💻 Dev Zone
+                </Link>
+              )}
               <button onClick={logout} className="btn-secondary">Logout</button>
             </>
           ) : (

@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
+import PrivateRoute from './components/PrivateRoute';
+import AdminRoute from './components/AdminRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -9,7 +11,10 @@ import Players from './pages/Players';
 import Tournaments from './pages/Tournaments';
 import Rankings from './pages/Rankings';
 import Dashboard from './pages/Dashboard';
-import PrivateRoute from './components/PrivateRoute';
+import DeveloperResourcesDashboard from './pages/developer-resources/DeveloperResourcesDashboard';
+import SRSPage from './pages/developer-resources/SRSPage';
+import ArchitecturePage from './pages/developer-resources/ArchitecturePage';
+import TechStackPage from './pages/developer-resources/TechStackPage';
 
 export default function App() {
   return (
@@ -23,6 +28,12 @@ export default function App() {
           <Route path="/tournaments" element={<Layout><Tournaments /></Layout>} />
           <Route path="/rankings" element={<Layout><Rankings /></Layout>} />
           <Route path="/dashboard" element={<PrivateRoute><Layout><Dashboard /></Layout></PrivateRoute>} />
+          
+          {/* Developer Resources Routes (Admin Only) */}
+          <Route path="/developer-resources" element={<AdminRoute><DeveloperResourcesDashboard /></AdminRoute>} />
+          <Route path="/developer-resources/srs" element={<AdminRoute><SRSPage /></AdminRoute>} />
+          <Route path="/developer-resources/architecture" element={<AdminRoute><ArchitecturePage /></AdminRoute>} />
+          <Route path="/developer-resources/tech-stack" element={<AdminRoute><TechStackPage /></AdminRoute>} />
         </Routes>
       </Router>
     </AuthProvider>
