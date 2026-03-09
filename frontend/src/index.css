@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  @apply transition-colors duration-200;
+}
+
+body {
+  @apply bg-squash-light text-squash-dark;
+}
+
+.btn-primary {
+  @apply px-4 py-2 bg-squash-primary text-white rounded-lg hover:bg-squash-dark transition-all;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 bg-squash-secondary text-white rounded-lg hover:brightness-110;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-md p-6 hover:shadow-lg;
+}
+
+.navbar {
+  @apply bg-squash-primary text-white shadow-lg;
+}
