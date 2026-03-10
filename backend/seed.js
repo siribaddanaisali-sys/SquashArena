@@ -355,6 +355,14 @@ const seedDatabase = async () => {
         numCourts: 10,
         contactPhone: '+971-4-xxx-xxxx',
       },
+      {
+        name: 'Colombo Squash Arena',
+        city: 'Colombo',
+        country: 'Sri Lanka',
+        address: '99 Sports Complex, Colombo 3',
+        numCourts: 8,
+        contactPhone: '+94-11-2345678',
+      },
     ]);
 
     // Create courts for venues
@@ -369,14 +377,14 @@ const seedDatabase = async () => {
       }
     }
 
-    console.log('✓ Created 3 venues with 24 courts');
+    console.log('✓ Created 4 venues with 32 courts');
 
     // ============ TOURNAMENTS ============
     console.log('Creating tournaments...');
     const tournaments = await Tournament.bulkCreate([
       {
         name: 'International Championship 2026',
-        description: 'Premier international squash championship',
+        description: 'Premier international squash championship bringing together the world\'s top players',
         startDate: new Date('2026-04-01'),
         endDate: new Date('2026-04-15'),
         category: 'professional',
@@ -388,7 +396,7 @@ const seedDatabase = async () => {
       },
       {
         name: 'European Open 2026',
-        description: 'Open squash tournament for European players',
+        description: 'Open squash tournament for European players competing for continental titles',
         startDate: new Date('2026-05-01'),
         endDate: new Date('2026-05-10'),
         category: 'amateur',
@@ -400,7 +408,7 @@ const seedDatabase = async () => {
       },
       {
         name: 'Junior Championship',
-        description: 'Youth squash championship for players under 21',
+        description: 'Youth squash championship for players under 21, development pathway for future champions',
         startDate: new Date('2026-03-20'),
         endDate: new Date('2026-03-25'),
         category: 'junior',
@@ -412,7 +420,7 @@ const seedDatabase = async () => {
       },
       {
         name: 'Masters Cup',
-        description: 'Exclusive tournament for professional masters',
+        description: 'Exclusive tournament for professional masters aged 40+',
         startDate: new Date('2026-06-01'),
         endDate: new Date('2026-06-08'),
         category: 'professional',
@@ -424,7 +432,7 @@ const seedDatabase = async () => {
       },
       {
         name: 'Spring Open',
-        description: 'Regional open squash tournament',
+        description: 'Regional open squash tournament for all skill levels',
         startDate: new Date('2026-03-01'),
         endDate: new Date('2026-03-10'),
         category: 'amateur',
@@ -434,9 +442,21 @@ const seedDatabase = async () => {
         maxParticipants: 32,
         registeredParticipants: 30,
       },
+      {
+        name: 'Sri Lanka National Classic',
+        description: 'Premier squash tournament showcasing Sri Lankan talent on the international stage',
+        startDate: new Date('2026-07-15'),
+        endDate: new Date('2026-07-25'),
+        category: 'professional',
+        status: 'upcoming',
+        location: 'Colombo, Sri Lanka',
+        organizerId: organizers[2].id,
+        maxParticipants: 28,
+        registeredParticipants: 22,
+      },
     ]);
 
-    console.log('✓ Created 5 tournaments');
+    console.log('✓ Created 6 tournaments');
 
     // ============ MATCHES ============
     console.log('Creating matches...');
