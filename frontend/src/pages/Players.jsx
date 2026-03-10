@@ -11,10 +11,14 @@ export default function Players() {
       try {
         setLoading(true);
         const data = await api.get('/players');
-        console.log('Players fetched:', data);
-        setPlayers(data || []);
+        console.log('Players API response:', data);
+        
+        // Ensure we have an array
+        const playersList = Array.isArray(data) ? data : [];
+        console.log('Setting players state with:', playersList);
+        setPlayers(playersList);
       } catch (err) {
-        console.error('Failed to fetch players:', err);
+        console.error('Error fetching players:', err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -24,62 +28,62 @@ export default function Players() {
     fetchPlayers();
   }, []);
 
-  if (loading) return <div className="text-center py-12 text-lg">Loading players...</div>;
-  
-  if (error) return <div className="text-center py-12 text-red-600">Error: {error}</div>;
+  console.log('Players component render - loading:', loading, 'error:', error, 'players count:', players.length);
 
-  if (players.length === 0) {
-    return (
-      <div>
-        <h1 className="text-4xl font-bold mb-8">👥 Players Directory</h1>
-        <div className="text-center py-12 bg-gray-100 rounded-lg">
-          <p className="text-gray-600">No players available at the moment.</p>
-        </div>
-      </div>
-    );
+  if (loading) {
+    return <div className="text-center py-12">Loading players...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-12 text-red-600">Error: {error}</div>;
   }
 
   return (
     <div>
       <h1 className="text-4xl font-bold mb-8">👥 Players Directory</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {players.map(player => (
-          <div key={player.id} className="card hover:shadow-lg transition">
-            <div className="flex items-center mb-4 pb-4 border-b">
-              <div className="w-14 h-14 bg-gradient-to-br from-squash-primary to-squash-secondary rounded-full mr-4 flex items-center justify-center text-white font-bold text-lg">
-                #{player.ranking}
+      
+      {players.length === 0 ? (
+        <div className="text-center py-12 bg-gray-100 rounded-lg">
+          <p className="text-gray-600">No players available.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {players.map((player) => (
+            <div key={player.id} className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="text-2xl font-bold text-squash-primary">#{player.ranking || '-'}</div>
+                <div>
+                  <h3 className="text-lg font-bold">{player.User?.firstName || ''} {player.User?.lastName || 'Player'}</h3>
+                  <p className="text-gray-600 text-sm">{player.nationality || ''}</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-lg">{player.User?.firstName} {player.User?.lastName}</h3>
-                <p className="text-sm text-gray-600">{player.nationality || 'Player'}</p>
+              
+              <div className="border-t pt-4">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">Points</p>
+                    <p className="font-bold text-lg">{parseFloat(player.points || 0).toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Record</p>
+                    <p className="font-bold">{player.wins || 0}W - {player.losses || 0}L</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Hand</p>
+                    <p className="font-bold capitalize">{player.hand || 'right'}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Status</p>
+                    <p className={`font-bold text-xs px-2 py-1 rounded ${
+                      player.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100'
+                    }`}>{player.status || 'N/A'}</p>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700"><strong>Points:</strong></span>
-                <span className="text-squash-secondary font-bold">{player.points?.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700"><strong>Record:</strong></span>
-                <span className="text-sm font-semibold">{player.wins}W - {player.losses}L</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-700"><strong>Hand:</strong></span>
-                <span className="capitalize text-sm">{player.hand || 'Right'}</span>
-              </div>
-              <div className="flex justify-between items-center pt-2">
-                <span className="text-gray-700"><strong>Status:</strong></span>
-                <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                  player.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {player.status?.toUpperCase()}
-                </span>
-              </div>
-            </div>
-            {player.bio && <p className="text-sm text-gray-600 mt-4 italic">{player.bio}</p>}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
