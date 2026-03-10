@@ -27,6 +27,48 @@ router.get('/world', async (req, res) => {
 });
 
 // Get regional rankings
+router.get('/regional', async (req, res) => {
+  try {
+    const rankings = await Ranking.findAll({
+      where: { category: 'regional' },
+      include: [{
+        model: Player,
+        include: [{
+          model: User,
+          attributes: ['firstName', 'lastName', 'profilePicture'],
+        }],
+      }],
+      order: [['rank', 'ASC']],
+      limit: 100,
+    });
+    res.json(rankings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get national rankings
+router.get('/national', async (req, res) => {
+  try {
+    const rankings = await Ranking.findAll({
+      where: { category: 'national' },
+      include: [{
+        model: Player,
+        include: [{
+          model: User,
+          attributes: ['firstName', 'lastName', 'profilePicture'],
+        }],
+      }],
+      order: [['rank', 'ASC']],
+      limit: 100,
+    });
+    res.json(rankings);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get regional rankings by region (with parameter)
 router.get('/regional/:region', async (req, res) => {
   try {
     const rankings = await Ranking.findAll({

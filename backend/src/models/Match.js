@@ -49,6 +49,7 @@ const Match = sequelize.define('Match', {
 }, {
   tableName: 'matches',
   timestamps: true,
+  freezeTableName: true,
 });
 
 export default Match;

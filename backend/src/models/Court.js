@@ -26,6 +26,7 @@ const Court = sequelize.define('Court', {
 }, {
   tableName: 'courts',
   timestamps: true,
+  freezeTableName: true,
 });
 
 export default Court;

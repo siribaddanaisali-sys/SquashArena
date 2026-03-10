@@ -32,6 +32,7 @@ const Coach = sequelize.define('Coach', {
 }, {
   tableName: 'coaches',
   timestamps: true,
+  freezeTableName: true,
 });
 
 export default Coach;

@@ -47,6 +47,7 @@ const Player = sequelize.define('Player', {
 }, {
   tableName: 'players',
   timestamps: true,
+  freezeTableName: true,
 });
 
 export default Player;

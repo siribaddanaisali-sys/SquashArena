@@ -39,6 +39,7 @@ const Venue = sequelize.define('Venue', {
 }, {
   tableName: 'venues',
   timestamps: true,
+  freezeTableName: true,
 });
 
 export default Venue;

@@ -49,6 +49,7 @@ const Tournament = sequelize.define('Tournament', {
 }, {
   tableName: 'tournaments',
   timestamps: true,
+  freezeTableName: true,
 });
 
 export default Tournament;

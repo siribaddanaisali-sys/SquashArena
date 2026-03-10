@@ -21,7 +21,11 @@ export const initDatabase = async () => {
     await sequelize.authenticate();
     console.log('✓ Database connection established');
     
-    await sequelize.sync({ alter: process.env.NODE_ENV === 'development' });
+    // Use force: false to avoid dropping tables, and set specific sync options
+    await sequelize.sync({ 
+      alter: false,
+      logging: false
+    });
     console.log('✓ Database synchronized');
   } catch (error) {
     console.error('✗ Database connection failed:', error.message);
