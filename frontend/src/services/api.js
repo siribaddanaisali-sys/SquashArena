@@ -9,25 +9,33 @@ const getAuthHeader = () => {
   return {};
 };
 
+// Helper to get fetch options
+const getFetchOptions = (method, body = null) => {
+  const options = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader(),
+    },
+  };
+  if (body) {
+    options.body = JSON.stringify(body);
+  }
+  return options;
+};
+
 export const api = {
   async get(endpoint) {
     try {
       const fullUrl = `${API_BASE_URL}${endpoint}`;
       console.log(`Fetching: ${fullUrl}`);
       
-      const response = await fetch(fullUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeader(),
-        },
-        credentials: 'include',
-      });
+      const response = await fetch(fullUrl, getFetchOptions('GET'));
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`API Error [${response.status}]:`, errorText);
-        throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -42,15 +50,7 @@ export const api = {
   async post(endpoint, data) {
     try {
       const fullUrl = `${API_BASE_URL}${endpoint}`;
-      const response = await fetch(fullUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeader(),
-        },
-        body: JSON.stringify(data),
-        credentials: 'include',
-      });
+      const response = await fetch(fullUrl, getFetchOptions('POST', data));
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`API Error: ${response.status} ${response.statusText}`);
@@ -65,15 +65,7 @@ export const api = {
   async put(endpoint, data) {
     try {
       const fullUrl = `${API_BASE_URL}${endpoint}`;
-      const response = await fetch(fullUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeader(),
-        },
-        body: JSON.stringify(data),
-        credentials: 'include',
-      });
+      const response = await fetch(fullUrl, getFetchOptions('PUT', data));
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`API Error: ${response.status} ${response.statusText}`);
@@ -88,14 +80,7 @@ export const api = {
   async delete(endpoint) {
     try {
       const fullUrl = `${API_BASE_URL}${endpoint}`;
-      const response = await fetch(fullUrl, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeader(),
-        },
-        credentials: 'include',
-      });
+      const response = await fetch(fullUrl, getFetchOptions('DELETE'));
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`API Error: ${response.status} ${response.statusText}`);
