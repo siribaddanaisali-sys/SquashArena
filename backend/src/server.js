@@ -19,11 +19,16 @@ import venueRoutes from './routes/venueRoutes.js';
 
 dotenv.config();
 
+// Parse CORS_ORIGIN comma-separated string into array
+const corsOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : ['http://localhost:5173'];
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CORS_ORIGIN,
+    origin: corsOrigins,
     methods: ['GET', 'POST'],
   },
 });
@@ -31,7 +36,7 @@ const io = new Server(server, {
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN,
+  origin: corsOrigins,
   credentials: true,
 }));
 app.use(express.json());

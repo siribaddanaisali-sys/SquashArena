@@ -1,5 +1,14 @@
 const API_BASE_URL = 'http://localhost:5000/api';
 
+// Helper to get auth header if token exists
+const getAuthHeader = () => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    return { 'Authorization': `Bearer ${token}` };
+  }
+  return {};
+};
+
 export const api = {
   async get(endpoint) {
     try {
@@ -10,7 +19,9 @@ export const api = {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeader(),
         },
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -35,8 +46,10 @@ export const api = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeader(),
         },
         body: JSON.stringify(data),
+        credentials: 'include',
       });
       if (!response.ok) {
         const errorText = await response.text();
@@ -56,8 +69,10 @@ export const api = {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeader(),
         },
         body: JSON.stringify(data),
+        credentials: 'include',
       });
       if (!response.ok) {
         const errorText = await response.text();
@@ -75,6 +90,11 @@ export const api = {
       const fullUrl = `${API_BASE_URL}${endpoint}`;
       const response = await fetch(fullUrl, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader(),
+        },
+        credentials: 'include',
       });
       if (!response.ok) {
         const errorText = await response.text();

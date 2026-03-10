@@ -17,6 +17,7 @@ router.get('/', async (req, res) => {
       where,
       include: [{
         model: User,
+        as: 'organizer',
         attributes: ['firstName', 'lastName'],
       }],
       order: [['startDate', 'DESC']],
@@ -33,6 +34,7 @@ router.get('/:id', async (req, res) => {
     const tournament = await Tournament.findByPk(req.params.id, {
       include: [{
         model: User,
+        as: 'organizer',
         attributes: { exclude: ['password'] },
       }],
     });
