@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api.js';
 
 export default function Players() {
@@ -49,7 +50,7 @@ export default function Players() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {players.map((player) => (
-            <div key={player.id} className="bg-white rounded-lg shadow p-6">
+            <Link to={`/players/${player.id}`} key={player.id} className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition cursor-pointer">
               <div className="flex items-start gap-4 mb-4">
                 <div className="text-2xl font-bold text-squash-primary">#{player.ranking || '-'}</div>
                 <div>
@@ -61,8 +62,8 @@ export default function Players() {
               <div className="border-t pt-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-gray-600">Points</p>
-                    <p className="font-bold text-lg">{parseFloat(player.points || 0).toFixed(2)}</p>
+                    <p className="text-gray-600">ELO Rating</p>
+                    <p className="font-bold text-lg">{parseFloat(player.eloRating || 1500).toFixed(0)}</p>
                   </div>
                   <div>
                     <p className="text-gray-600">Record</p>
@@ -80,7 +81,7 @@ export default function Players() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

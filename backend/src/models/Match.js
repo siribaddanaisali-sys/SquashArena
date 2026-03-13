@@ -29,6 +29,13 @@ const Match = sequelize.define('Match', {
   score: {
     type: DataTypes.JSON,
     defaultValue: { games: [] },
+    get() {
+      const val = this.getDataValue('score');
+      if (typeof val === 'string') {
+        try { return JSON.parse(val); } catch { return { games: [] }; }
+      }
+      return val || { games: [] };
+    },
   },
   status: {
     type: DataTypes.ENUM('scheduled', 'ongoing', 'completed', 'cancelled'),

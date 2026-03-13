@@ -9,6 +9,9 @@ import Ranking from './src/models/Ranking.js';
 import Venue from './src/models/Venue.js';
 import Court from './src/models/Court.js';
 import PlayerCoach from './src/models/PlayerCoach.js';
+import TournamentRegistration from './src/models/TournamentRegistration.js';
+import TournamentDraw from './src/models/TournamentDraw.js';
+import PlayerEloHistory from './src/models/PlayerEloHistory.js';
 
 const seedDatabase = async () => {
   try {
@@ -194,17 +197,18 @@ const seedDatabase = async () => {
 
     // Create player profiles
     const playerProfiles = [];
-    for (const user of players) {
+    const eloRatings = [1850, 1780, 1720, 1690, 1660, 1640, 1610, 1580, 1560, 1540, 1520, 1500, 1490, 1470, 1450, 1430, 1410, 1390, 1370, 1350];
+    for (let idx = 0; idx < players.length; idx++) {
+      const user = players[idx];
       const profile = await Player.create({
         userId: user.id,
-        ranking: Math.floor(Math.random() * 100) + 1,
-        points: Math.floor(Math.random() * 5000) + 100,
-        wins: Math.floor(Math.random() * 50),
+        ranking: idx + 1,
+        points: (20 - idx) * 250,
+        eloRating: eloRatings[idx],
+        wins: Math.floor(Math.random() * 50) + 10,
         losses: Math.floor(Math.random() * 30),
-        hand: Math.random() > 0.5 ? 'right' : 'left',
-        nationality: ['Pakistan', 'UK', 'Egypt', 'USA', 'Canada', 'Australia'][
-          Math.floor(Math.random() * 6)
-        ],
+        hand: Math.random() > 0.8 ? 'left' : 'right',
+        nationality: ['Pakistan', 'UK', 'Egypt', 'USA', 'Canada', 'Australia'][idx % 6],
         bio: `Professional squash player with expertise in competitive tournaments.`,
         status: 'active',
       });
@@ -392,7 +396,10 @@ const seedDatabase = async () => {
         location: 'Cairo, Egypt',
         organizerId: organizers[0].id,
         maxParticipants: 32,
-        registeredParticipants: 28,
+        registeredParticipants: 16,
+        drawType: 'single_elimination',
+        registrationOpen: true,
+        prizePool: 50000,
       },
       {
         name: 'European Open 2026',
@@ -404,7 +411,10 @@ const seedDatabase = async () => {
         location: 'London, UK',
         organizerId: organizers[1].id,
         maxParticipants: 48,
-        registeredParticipants: 35,
+        registeredParticipants: 12,
+        drawType: 'round_robin',
+        registrationOpen: true,
+        prizePool: 25000,
       },
       {
         name: 'Junior Championship',
@@ -416,7 +426,9 @@ const seedDatabase = async () => {
         location: 'Dubai, UAE',
         organizerId: organizers[2].id,
         maxParticipants: 24,
-        registeredParticipants: 18,
+        registeredParticipants: 8,
+        drawType: 'single_elimination',
+        registrationOpen: false,
       },
       {
         name: 'Masters Cup',
@@ -429,6 +441,9 @@ const seedDatabase = async () => {
         organizerId: organizers[0].id,
         maxParticipants: 16,
         registeredParticipants: 14,
+        drawType: 'single_elimination',
+        registrationOpen: true,
+        prizePool: 30000,
       },
       {
         name: 'Spring Open',
@@ -486,22 +501,13 @@ const seedDatabase = async () => {
         score:
           status === 'completed'
             ? {
-                sets: [
-                  {
-                    player1: Math.floor(Math.random() * 11) + 9,
-                    player2: Math.floor(Math.random() * 11) + 9,
-                  },
-                  {
-                    player1: Math.floor(Math.random() * 11) + 9,
-                    player2: Math.floor(Math.random() * 11) + 9,
-                  },
-                  {
-                    player1: Math.floor(Math.random() * 11) + 9,
-                    player2: Math.floor(Math.random() * 11) + 9,
-                  },
+                games: [
+                  [11, Math.floor(Math.random() * 9) + 2],
+                  [Math.floor(Math.random() * 9) + 2, 11],
+                  [11, Math.floor(Math.random() * 9) + 2],
                 ],
               }
-            : null,
+            : { games: [] },
         winnerId: status === 'completed' ? (Math.random() > 0.5 ? player1.id : player2.id) : null,
       });
 
@@ -540,6 +546,41 @@ const seedDatabase = async () => {
     }
 
     console.log('✓ Created player-coach relationships');
+
+    // ============ TOURNAMENT REGISTRATIONS ============
+    console.log('Creating tournament registrations...');
+    
+    // Register first 16 players for International Championship
+    for (let i = 0; i < Math.min(16, playerProfiles.length); i++) {
+      await TournamentRegistration.create({
+        tournamentId: tournaments[0].id,
+        playerId: playerProfiles[i].id,
+        seedNumber: i + 1,
+        status: 'confirmed',
+      });
+    }
+
+    // Register 12 players for European Open
+    for (let i = 0; i < Math.min(12, playerProfiles.length); i++) {
+      await TournamentRegistration.create({
+        tournamentId: tournaments[1].id,
+        playerId: playerProfiles[i].id,
+        seedNumber: i + 1,
+        status: 'registered',
+      });
+    }
+
+    // Register 8 players for Junior Championship
+    for (let i = 0; i < 8; i++) {
+      await TournamentRegistration.create({
+        tournamentId: tournaments[2].id,
+        playerId: playerProfiles[i].id,
+        seedNumber: i + 1,
+        status: 'confirmed',
+      });
+    }
+
+    console.log('✓ Created tournament registrations');
 
     console.log('\n✅ Database seeding completed successfully!\n');
     console.log('🔐 Test Accounts:');

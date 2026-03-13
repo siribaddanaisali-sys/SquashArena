@@ -20,6 +20,10 @@ const Player = sequelize.define('Player', {
     type: DataTypes.DECIMAL(10, 2),
     defaultValue: 0,
   },
+  eloRating: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 1500,
+  },
   wins: {
     type: DataTypes.INTEGER,
     defaultValue: 0,

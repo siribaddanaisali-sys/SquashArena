@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../services/api.js';
 
 export default function Tournaments() {
@@ -63,7 +64,7 @@ export default function Tournaments() {
       <h1 className="text-4xl font-bold mb-8">🏅 Tournaments</h1>
       <div className="grid grid-cols-1 gap-6">
         {tournaments.map(tournament => (
-          <div key={tournament.id} className="card border-l-4 border-squash-primary hover:shadow-lg transition">
+          <Link to={`/tournaments/${tournament.id}`} key={tournament.id} className="card border-l-4 border-squash-primary hover:shadow-lg transition block">
             <div className="flex justify-between items-start">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-2">
@@ -106,7 +107,7 @@ export default function Tournaments() {
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

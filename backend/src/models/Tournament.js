@@ -41,6 +41,22 @@ const Tournament = sequelize.define('Tournament', {
     type: DataTypes.INTEGER,
     defaultValue: 0,
   },
+  drawType: {
+    type: DataTypes.ENUM('single_elimination', 'double_elimination', 'round_robin', 'group_stage'),
+    defaultValue: 'single_elimination',
+  },
+  registrationOpen: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+  registrationDeadline: {
+    type: DataTypes.DATE,
+    defaultValue: null,
+  },
+  prizePool: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0,
+  },
   organizerId: {
     type: DataTypes.UUID,
     allowNull: false,

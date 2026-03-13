@@ -15,6 +15,7 @@ export default function Navbar() {
           <Link to="/players" className="hover:text-squash-secondary">Players</Link>
           <Link to="/tournaments" className="hover:text-squash-secondary">Tournaments</Link>
           <Link to="/rankings" className="hover:text-squash-secondary">Rankings</Link>
+          <Link to="/head-to-head" className="hover:text-squash-secondary">H2H</Link>
           {user ? (
             <>
               <Link to="/dashboard" className="hover:text-squash-secondary">Dashboard</Link>

@@ -7,6 +7,9 @@ import Ranking from './Ranking.js';
 import Venue from './Venue.js';
 import Court from './Court.js';
 import PlayerCoach from './PlayerCoach.js';
+import TournamentRegistration from './TournamentRegistration.js';
+import TournamentDraw from './TournamentDraw.js';
+import PlayerEloHistory from './PlayerEloHistory.js';
 
 // User associations
 User.hasOne(Player, { foreignKey: 'userId' });
@@ -39,6 +42,21 @@ Tournament.hasMany(Match, { foreignKey: 'tournamentId' });
 Venue.hasMany(Court, { foreignKey: 'venueId' });
 Court.belongsTo(Venue, { foreignKey: 'venueId' });
 
+// Tournament Registration associations
+TournamentRegistration.belongsTo(Tournament, { foreignKey: 'tournamentId' });
+TournamentRegistration.belongsTo(Player, { foreignKey: 'playerId' });
+Tournament.hasMany(TournamentRegistration, { foreignKey: 'tournamentId', as: 'registrations' });
+Player.hasMany(TournamentRegistration, { foreignKey: 'playerId', as: 'tournamentRegistrations' });
+
+// Tournament Draw associations
+TournamentDraw.belongsTo(Tournament, { foreignKey: 'tournamentId' });
+Tournament.hasOne(TournamentDraw, { foreignKey: 'tournamentId', as: 'draw' });
+
+// ELO History associations
+PlayerEloHistory.belongsTo(Player, { foreignKey: 'playerId' });
+PlayerEloHistory.belongsTo(Match, { foreignKey: 'matchId' });
+Player.hasMany(PlayerEloHistory, { foreignKey: 'playerId', as: 'eloHistory' });
+
 export {
   User,
   Player,
@@ -49,4 +67,7 @@ export {
   Venue,
   Court,
   PlayerCoach,
+  TournamentRegistration,
+  TournamentDraw,
+  PlayerEloHistory,
 };
