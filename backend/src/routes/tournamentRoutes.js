@@ -1,7 +1,8 @@
 import express from 'express';
-import { authenticate, authorize } from '../middleware/auth.js';
+import { authenticate, authorize, regionGuard } from '../middleware/auth.js';
 import Tournament from '../models/Tournament.js';
 import User from '../models/User.js';
+import Region from '../models/Region.js';
 
 const router = express.Router();
 
@@ -15,11 +16,10 @@ router.get('/', async (req, res) => {
 
     const tournaments = await Tournament.findAll({
       where,
-      include: [{
-        model: User,
-        as: 'organizer',
-        attributes: ['firstName', 'lastName'],
-      }],
+      include: [
+        { model: User, as: 'organizer', attributes: ['firstName', 'lastName'] },
+        { model: Region, as: 'region', attributes: ['id', 'name', 'code'] },
+      ],
       order: [['startDate', 'DESC']],
     });
     res.json(tournaments);
@@ -32,11 +32,10 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const tournament = await Tournament.findByPk(req.params.id, {
-      include: [{
-        model: User,
-        as: 'organizer',
-        attributes: { exclude: ['password'] },
-      }],
+      include: [
+        { model: User, as: 'organizer', attributes: { exclude: ['password'] } },
+        { model: Region, as: 'region', attributes: ['id', 'name', 'code'] },
+      ],
     });
     if (!tournament) {
       return res.status(404).json({ error: 'Tournament not found' });
@@ -47,8 +46,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create tournament
-router.post('/', authenticate, authorize('organiser'), async (req, res) => {
+// Create tournament - organiser creates in their own region
+router.post('/', authenticate, authorize('organiser', 'super_admin'), async (req, res) => {
   try {
     const { name, description, startDate, endDate, category, location, maxParticipants } = req.body;
 
@@ -61,6 +60,7 @@ router.post('/', authenticate, authorize('organiser'), async (req, res) => {
       location,
       maxParticipants,
       organizerId: req.userId,
+      regionId: req.userRegionId,
       status: 'upcoming',
     });
 
@@ -73,21 +73,27 @@ router.post('/', authenticate, authorize('organiser'), async (req, res) => {
   }
 });
 
-// Update tournament
-router.put('/:id', authenticate, authorize('organiser'), async (req, res) => {
-  try {
-    const tournament = await Tournament.findByPk(req.params.id);
-    if (!tournament) {
-      return res.status(404).json({ error: 'Tournament not found' });
+// Update tournament - region guard enforced
+router.put('/:id', authenticate, authorize('organiser', 'super_admin'),
+  regionGuard(async (req) => {
+    const t = await Tournament.findByPk(req.params.id, { attributes: ['regionId'] });
+    return t?.regionId;
+  }),
+  async (req, res) => {
+    try {
+      const tournament = await Tournament.findByPk(req.params.id);
+      if (!tournament) {
+        return res.status(404).json({ error: 'Tournament not found' });
+      }
+
+      const { name, description, status, location } = req.body;
+      await tournament.update({ name, description, status, location });
+
+      res.json({ message: 'Tournament updated successfully', tournament });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
-
-    const { name, description, status, location } = req.body;
-    await tournament.update({ name, description, status, location });
-
-    res.json({ message: 'Tournament updated successfully', tournament });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
   }
-});
+);
 
 export default router;

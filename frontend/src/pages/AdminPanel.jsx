@@ -100,7 +100,13 @@ export default function AdminPanel() {
 
   return (
     <div>
-      <h1 className="text-4xl font-bold mb-6">🛡️ Admin Panel</h1>
+      <h1 className="text-4xl font-bold mb-2">🛡️ Admin Panel</h1>
+      {user?.regionId && user?.role !== 'super_admin' && (
+        <p className="text-gray-500 mb-6 text-sm">📍 Showing data for your region only</p>
+      )}
+      {user?.role === 'super_admin' && (
+        <p className="text-yellow-600 mb-6 text-sm font-medium">🌐 Super Admin — Global access to all regions</p>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-2 mb-8 flex-wrap">
@@ -163,7 +169,7 @@ export default function AdminPanel() {
                 <th className="p-3">Email</th>
                 <th className="p-3">Role</th>
                 <th className="p-3">Status</th>
-                {user?.role === 'regulator' && <th className="p-3">Actions</th>}
+                {(user?.role === 'regulator' || user?.role === 'super_admin') && <th className="p-3">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -177,7 +183,7 @@ export default function AdminPanel() {
                       {u.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  {user?.role === 'regulator' && (
+                  {(user?.role === 'regulator' || user?.role === 'super_admin') && (
                     <td className="p-3">
                       <button onClick={() => toggleUserStatus(u.id)} className="text-sm text-squash-primary hover:underline">
                         {u.isActive ? 'Deactivate' : 'Activate'}
@@ -202,7 +208,7 @@ export default function AdminPanel() {
                 <th className="p-3">Nationality</th>
                 <th className="p-3">ELO</th>
                 <th className="p-3">Status</th>
-                {user?.role === 'regulator' && <th className="p-3">Actions</th>}
+                {(user?.role === 'regulator' || user?.role === 'super_admin') && <th className="p-3">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -217,7 +223,7 @@ export default function AdminPanel() {
                       {p.status}
                     </span>
                   </td>
-                  {user?.role === 'regulator' && (
+                  {(user?.role === 'regulator' || user?.role === 'super_admin') && (
                     <td className="p-3">
                       <select
                         value={p.status}
@@ -245,6 +251,7 @@ export default function AdminPanel() {
               <tr>
                 <th className="p-3">Tournament</th>
                 <th className="p-3">Location</th>
+                <th className="p-3">Region</th>
                 <th className="p-3">Dates</th>
                 <th className="p-3">Organizer</th>
                 <th className="p-3">Status</th>
@@ -255,6 +262,13 @@ export default function AdminPanel() {
                 <tr key={t.id} className="border-t hover:bg-gray-50">
                   <td className="p-3 font-medium">{t.name}</td>
                   <td className="p-3">{t.location}</td>
+                  <td className="p-3">
+                    {t.region ? (
+                      <span className="text-xs px-2 py-1 rounded bg-indigo-100 text-indigo-800">{t.region.name}</span>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </td>
                   <td className="p-3 text-sm">{new Date(t.startDate).toLocaleDateString()} — {new Date(t.endDate).toLocaleDateString()}</td>
                   <td className="p-3">{t.organizer?.firstName} {t.organizer?.lastName}</td>
                   <td className="p-3">
@@ -272,7 +286,7 @@ export default function AdminPanel() {
       {/* Discipline Tab */}
       {!loading && tab === 'discipline' && (
         <div>
-          {user?.role === 'regulator' && (
+          {(user?.role === 'regulator' || user?.role === 'super_admin') && (
             <div className="mb-6">
               <button onClick={() => setShowDisciplineForm(!showDisciplineForm)} className="btn-primary">
                 {showDisciplineForm ? 'Cancel' : '+ Issue Discipline Action'}
@@ -315,7 +329,7 @@ export default function AdminPanel() {
                   <th className="p-3">Issued By</th>
                   <th className="p-3">Date</th>
                   <th className="p-3">Status</th>
-                  {user?.role === 'regulator' && <th className="p-3">Actions</th>}
+                  {(user?.role === 'regulator' || user?.role === 'super_admin') && <th className="p-3">Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -346,7 +360,7 @@ export default function AdminPanel() {
                         {d.status}
                       </span>
                     </td>
-                    {user?.role === 'regulator' && (
+                    {(user?.role === 'regulator' || user?.role === 'super_admin') && (
                       <td className="p-3">
                         <select
                           value={d.status}

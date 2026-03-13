@@ -11,7 +11,7 @@ export default function AdminRoute({ children }) {
   }
 
   // Allow 'regulator' role for admin access
-  if (user?.role !== 'regulator' && user?.role !== 'organiser') {
+  if (user?.role !== 'regulator' && user?.role !== 'organiser' && user?.role !== 'super_admin') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-squash-light">
         <div className="card text-center max-w-md">

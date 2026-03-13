@@ -26,12 +26,12 @@ export default function Navbar() {
                 <Link to="/training-plans" className="hover:text-squash-secondary">Training</Link>
               )}
               <NotificationBell />
-              {(user.role === 'regulator' || user.role === 'organiser') && (
+              {(user.role === 'regulator' || user.role === 'organiser' || user.role === 'super_admin') && (
                 <Link to="/admin" className="hover:text-squash-secondary font-semibold text-red-500">
                   🛡️ Admin
                 </Link>
               )}
-              {(user.role === 'regulator' || user.role === 'organiser') && (
+              {(user.role === 'regulator' || user.role === 'organiser' || user.role === 'super_admin') && (
                 <Link to="/developer-resources" className="hover:text-squash-secondary font-semibold text-squash-accent">
                   💻 Dev Zone
                 </Link>

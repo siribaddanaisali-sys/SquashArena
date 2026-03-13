@@ -16,6 +16,7 @@ import Notification from './Notification.js';
 import Activity from './Activity.js';
 import Discipline from './Discipline.js';
 import TrainingPlan from './TrainingPlan.js';
+import Region from './Region.js';
 
 // User associations
 User.hasOne(Player, { foreignKey: 'userId' });
@@ -23,6 +24,12 @@ User.hasOne(Coach, { foreignKey: 'userId' });
 
 Player.belongsTo(User, { foreignKey: 'userId' });
 Coach.belongsTo(User, { foreignKey: 'userId' });
+
+// Region associations
+Region.hasMany(User, { foreignKey: 'regionId', as: 'users' });
+User.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
+Region.hasMany(Tournament, { foreignKey: 'regionId', as: 'tournaments' });
+Tournament.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 
 // Player-Coach associations
 Player.belongsToMany(Coach, { through: PlayerCoach, foreignKey: 'playerId' });
@@ -112,4 +119,5 @@ export {
   Activity,
   Discipline,
   TrainingPlan,
+  Region,
 };

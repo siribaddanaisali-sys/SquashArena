@@ -23,6 +23,7 @@ import dashboardRoutes from './routes/dashboardRoutes.js';
 import disciplineRoutes from './routes/disciplineRoutes.js';
 import trainingPlanRoutes from './routes/trainingPlanRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import regionRoutes from './routes/regionRoutes.js';
 
 dotenv.config();
 
@@ -69,6 +70,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/disciplines', disciplineRoutes);
 app.use('/api/training-plans', trainingPlanRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/regions', regionRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

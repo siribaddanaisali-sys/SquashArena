@@ -26,9 +26,14 @@ const User = sequelize.define('User', {
     allowNull: false,
   },
   role: {
-    type: DataTypes.ENUM('player', 'coach', 'organiser', 'regulator', 'viewer'),
+    type: DataTypes.ENUM('player', 'coach', 'organiser', 'regulator', 'viewer', 'super_admin'),
     defaultValue: 'viewer',
     allowNull: false,
+  },
+  regionId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: { model: 'regions', key: 'id' },
   },
   profilePicture: {
     type: DataTypes.STRING,

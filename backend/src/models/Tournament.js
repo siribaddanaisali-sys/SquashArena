@@ -62,6 +62,11 @@ const Tournament = sequelize.define('Tournament', {
     allowNull: false,
     references: { model: 'users', key: 'id' },
   },
+  regionId: {
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: { model: 'regions', key: 'id' },
+  },
 }, {
   tableName: 'tournaments',
   timestamps: true,

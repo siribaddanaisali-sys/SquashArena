@@ -18,6 +18,7 @@ import Notification from './src/models/Notification.js';
 import Activity from './src/models/Activity.js';
 import Discipline from './src/models/Discipline.js';
 import TrainingPlan from './src/models/TrainingPlan.js';
+import Region from './src/models/Region.js';
 
 const seedDatabase = async () => {
   try {
@@ -35,6 +36,18 @@ const seedDatabase = async () => {
 
     // Hash test password
     const hashedPassword = await bcryptjs.hash('Test@123', 10);
+
+    // ============ REGIONS ============
+    console.log('Creating regions...');
+    const regions = await Region.bulkCreate([
+      { name: 'Egypt', code: 'EG', continent: 'Africa' },
+      { name: 'United Kingdom', code: 'UK', continent: 'Europe' },
+      { name: 'United Arab Emirates', code: 'UAE', continent: 'Asia' },
+      { name: 'Sri Lanka', code: 'LK', continent: 'Asia' },
+      { name: 'United States', code: 'US', continent: 'North America' },
+      { name: 'Australia', code: 'AU', continent: 'Oceania' },
+    ]);
+    console.log('✓ Created 6 regions');
 
     // ============ USERS & PLAYERS ============
     console.log('Creating players...');
@@ -294,6 +307,7 @@ const seedDatabase = async () => {
         lastName: 'Organizer',
         role: 'organiser',
         isActive: true,
+        regionId: regions[0].id, // Egypt
       },
       {
         email: 'organizer.event@squash.com',
@@ -302,6 +316,7 @@ const seedDatabase = async () => {
         lastName: 'Organizer',
         role: 'organiser',
         isActive: true,
+        regionId: regions[1].id, // UK
       },
       {
         email: 'organizer.tournament@squash.com',
@@ -310,6 +325,7 @@ const seedDatabase = async () => {
         lastName: 'Organizer',
         role: 'organiser',
         isActive: true,
+        regionId: regions[3].id, // Sri Lanka
       },
     ]);
 
@@ -325,6 +341,7 @@ const seedDatabase = async () => {
         lastName: 'Regulator',
         role: 'regulator',
         isActive: true,
+        regionId: regions[0].id, // Egypt
       },
       {
         email: 'regulator.rules@squash.com',
@@ -333,10 +350,24 @@ const seedDatabase = async () => {
         lastName: 'Regulator',
         role: 'regulator',
         isActive: true,
+        regionId: regions[1].id, // UK
       },
     ]);
 
     console.log('✓ Created 2 regulators');
+
+    // ============ SUPER ADMIN ============
+    console.log('Creating super admin...');
+    const superAdmin = await User.create({
+      email: 'superadmin@squash.com',
+      password: hashedPassword,
+      firstName: 'Super',
+      lastName: 'Admin',
+      role: 'super_admin',
+      isActive: true,
+      regionId: null,
+    });
+    console.log('✓ Created 1 super admin (superadmin@squash.com / Test@123)');
 
     // ============ VENUES & COURTS ============
     console.log('Creating venues and courts...');
@@ -405,6 +436,7 @@ const seedDatabase = async () => {
         status: 'upcoming',
         location: 'Cairo, Egypt',
         organizerId: organizers[0].id,
+        regionId: regions[0].id, // Egypt
         maxParticipants: 32,
         registeredParticipants: 16,
         drawType: 'single_elimination',
@@ -420,6 +452,7 @@ const seedDatabase = async () => {
         status: 'upcoming',
         location: 'London, UK',
         organizerId: organizers[1].id,
+        regionId: regions[1].id, // UK
         maxParticipants: 48,
         registeredParticipants: 12,
         drawType: 'round_robin',
@@ -435,6 +468,7 @@ const seedDatabase = async () => {
         status: 'ongoing',
         location: 'Dubai, UAE',
         organizerId: organizers[2].id,
+        regionId: regions[2].id, // UAE
         maxParticipants: 24,
         registeredParticipants: 8,
         drawType: 'single_elimination',
@@ -449,6 +483,7 @@ const seedDatabase = async () => {
         status: 'upcoming',
         location: 'London, UK',
         organizerId: organizers[0].id,
+        regionId: regions[1].id, // UK
         maxParticipants: 16,
         registeredParticipants: 14,
         drawType: 'single_elimination',
@@ -464,6 +499,7 @@ const seedDatabase = async () => {
         status: 'completed',
         location: 'Cairo, Egypt',
         organizerId: organizers[1].id,
+        regionId: regions[0].id, // Egypt
         maxParticipants: 32,
         registeredParticipants: 30,
       },
@@ -476,6 +512,7 @@ const seedDatabase = async () => {
         status: 'upcoming',
         location: 'Colombo, Sri Lanka',
         organizerId: organizers[2].id,
+        regionId: regions[3].id, // Sri Lanka
         maxParticipants: 28,
         registeredParticipants: 22,
       },
