@@ -22,6 +22,8 @@ export default function Venues() {
   const [showForm, setShowForm] = useState(false);
   const [editingVenue, setEditingVenue] = useState(null);
   const [expandedVenue, setExpandedVenue] = useState(null);
+  const [expandedCountry, setExpandedCountry] = useState(null);
+  const [countrySearch, setCountrySearch] = useState('');
   const [form, setForm] = useState({ name: '', city: '', country: '', address: '', numCourts: 1, contactPhone: '', contactEmail: '' });
 
   const canManage = user && (user.role === 'organiser' || user.role === 'regulator');
@@ -56,6 +58,14 @@ export default function Venues() {
       return acc;
     }, {});
   }, [venues]);
+
+  // Filter countries by search
+  const filteredCountries = useMemo(() => {
+    if (!countrySearch.trim()) return Object.keys(venuesByCountry);
+    return Object.keys(venuesByCountry).filter(country =>
+      country.toLowerCase().includes(countrySearch.toLowerCase())
+    );
+  }, [venuesByCountry, countrySearch]);
 
   const getCourtSummary = (courts) => {
     if (!courts || courts.length === 0) return null;
@@ -134,21 +144,53 @@ export default function Venues() {
         </form>
       )}
 
+      {/* Country search bar */}
+      {venues.length > 0 && (
+        <div className="mb-6">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+            <input
+              type="text"
+              placeholder="Search countries..."
+              value={countrySearch}
+              onChange={e => setCountrySearch(e.target.value)}
+              className="input-field pl-10"
+            />
+          </div>
+        </div>
+      )}
+
       {venues.length === 0 ? (
         <div className="text-center py-12 bg-gray-100 rounded-lg">
           <p className="text-gray-600">No venues available.</p>
         </div>
+      ) : filteredCountries.length === 0 ? (
+        <div className="text-center py-12 bg-gray-100 rounded-lg">
+          <p className="text-gray-600">No countries match "{countrySearch}"</p>
+        </div>
       ) : (
-        Object.entries(venuesByCountry).map(([country, countryVenues]) => (
-          <div key={country} className="mb-10">
-            <div className="flex items-center gap-3 mb-4">
-              <h2 className="text-2xl font-bold text-squash-dark">🌍 {country}</h2>
-              <span className="bg-squash-primary/10 text-squash-primary text-sm font-medium px-3 py-1 rounded-full">
-                {countryVenues.length} venue{countryVenues.length > 1 ? 's' : ''}
-              </span>
-            </div>
+        filteredCountries.map(country => {
+          const countryVenues = venuesByCountry[country];
+          const isCountryOpen = expandedCountry === country;
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          return (
+          <div key={country} className="mb-4">
+            <button
+              onClick={() => setExpandedCountry(isCountryOpen ? null : country)}
+              className="w-full flex items-center justify-between bg-white rounded-lg shadow px-6 py-4 hover:shadow-md transition cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{isCountryOpen ? '▼' : '▶'}</span>
+                <h2 className="text-2xl font-bold text-squash-dark">🌍 {country}</h2>
+                <span className="bg-squash-primary/10 text-squash-primary text-sm font-medium px-3 py-1 rounded-full">
+                  {countryVenues.length} venue{countryVenues.length > 1 ? 's' : ''}
+                </span>
+              </div>
+              <span className="text-gray-400 text-sm">Click to {isCountryOpen ? 'collapse' : 'expand'}</span>
+            </button>
+
+            {isCountryOpen && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4 ml-4">
               {countryVenues.map(venue => {
                 const courtSummary = getCourtSummary(venue.Courts);
                 const isExpanded = expandedVenue === venue.id;
@@ -223,8 +265,10 @@ export default function Venues() {
                 );
               })}
             </div>
+            )}
           </div>
-        ))
+          );
+        })
       )}
     </div>
   );
