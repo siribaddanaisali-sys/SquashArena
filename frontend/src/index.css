@@ -25,3 +25,7 @@ body {
 .navbar {
   @apply bg-squash-primary text-white shadow-lg;
 }
+
+.input-field {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-squash-primary focus:border-transparent;
+}

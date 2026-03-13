@@ -63,6 +63,9 @@ export default function PlayerDetail() {
               }`}>{player.status}</span>
             </div>
             {player.bio && <p className="text-gray-500 mt-2">{player.bio}</p>}
+            <Link to={`/players/${id}/stats`} className="inline-block mt-2 text-sm text-squash-primary hover:underline font-medium">
+              📊 View Full Stats & Charts →
+            </Link>
           </div>
           <div className="text-right">
             <div className="text-5xl font-bold text-squash-primary">#{player.ranking || 'N/A'}</div>

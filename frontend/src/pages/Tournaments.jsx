@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api.js';
 
@@ -6,39 +6,38 @@ export default function Tournaments() {
   const [tournaments, setTournaments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
 
   useEffect(() => {
     const fetchTournaments = async () => {
       try {
         setLoading(true);
         const data = await api.get('/tournaments');
-        console.log('Tournaments fetched:', data);
         setTournaments(data || []);
       } catch (err) {
-        console.error('Failed to fetch tournaments:', err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-
     fetchTournaments();
   }, []);
 
-  if (loading) return <div className="text-center py-12 text-lg">Loading tournaments...</div>;
-  
-  if (error) return <div className="text-center py-12 text-red-600">Error: {error}</div>;
+  const filtered = useMemo(() => {
+    let result = [...tournaments];
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(t => t.name?.toLowerCase().includes(q) || t.location?.toLowerCase().includes(q));
+    }
+    if (filterStatus) result = result.filter(t => t.status === filterStatus);
+    if (filterCategory) result = result.filter(t => t.category === filterCategory);
+    return result;
+  }, [tournaments, search, filterStatus, filterCategory]);
 
-  if (tournaments.length === 0) {
-    return (
-      <div>
-        <h1 className="text-4xl font-bold mb-8">🏅 Tournaments</h1>
-        <div className="text-center py-12 bg-gray-100 rounded-lg">
-          <p className="text-gray-600">No tournaments available at the moment.</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className="text-center py-12 text-lg">Loading tournaments...</div>;
+  if (error) return <div className="text-center py-12 text-red-600">Error: {error}</div>;
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -61,9 +60,35 @@ export default function Tournaments() {
 
   return (
     <div>
-      <h1 className="text-4xl font-bold mb-8">🏅 Tournaments</h1>
+      <h1 className="text-4xl font-bold mb-6">🏅 Tournaments</h1>
+
+      {/* Search & Filters */}
+      <div className="bg-white rounded-lg shadow p-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <input className="input-field" placeholder="🔍 Search by name or location..." value={search} onChange={e => setSearch(e.target.value)} />
+          <select className="input-field" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+            <option value="">All Status</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+          </select>
+          <select className="input-field" value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
+            <option value="">All Categories</option>
+            <option value="professional">Professional</option>
+            <option value="amateur">Amateur</option>
+            <option value="junior">Junior</option>
+          </select>
+        </div>
+        <p className="text-gray-500 text-sm mt-2">{filtered.length} of {tournaments.length} tournaments</p>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="text-center py-12 bg-gray-100 rounded-lg">
+          <p className="text-gray-600">No tournaments match your filters.</p>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 gap-6">
-        {tournaments.map(tournament => (
+        {filtered.map(tournament => (
           <Link to={`/tournaments/${tournament.id}`} key={tournament.id} className="card border-l-4 border-squash-primary hover:shadow-lg transition block">
             <div className="flex justify-between items-start">
               <div className="flex-1">
@@ -110,6 +135,7 @@ export default function Tournaments() {
           </Link>
         ))}
       </div>
+      )}
     </div>
   );
 }

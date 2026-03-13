@@ -16,6 +16,8 @@ import Club from './src/models/Club.js';
 import ClubMembership from './src/models/ClubMembership.js';
 import Notification from './src/models/Notification.js';
 import Activity from './src/models/Activity.js';
+import Discipline from './src/models/Discipline.js';
+import TrainingPlan from './src/models/TrainingPlan.js';
 
 const seedDatabase = async () => {
   try {
@@ -668,6 +670,118 @@ const seedDatabase = async () => {
       { userId: players[2].id, type: 'match_scheduled', title: 'Match Scheduled', message: 'You have a match scheduled in Pakistan Open 2025.', isRead: false },
     ]);
     console.log('✓ Created notifications');
+
+    // ============ DISCIPLINE RECORDS ============
+    console.log('Creating discipline records...');
+    await Discipline.bulkCreate([
+      {
+        playerId: playerProfiles[3].id,
+        issuedBy: regulators[0].id,
+        type: 'warning',
+        reason: 'Unsportsmanlike conduct during International Championship quarter-final',
+        tournamentId: tournaments[0].id,
+        startDate: new Date(),
+        status: 'active',
+      },
+      {
+        playerId: playerProfiles[7].id,
+        issuedBy: regulators[0].id,
+        type: 'yellow_card',
+        reason: 'Racquet abuse and verbal altercation with referee',
+        tournamentId: tournaments[2].id,
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        status: 'active',
+      },
+      {
+        playerId: playerProfiles[12].id,
+        issuedBy: regulators[1].id,
+        type: 'suspension',
+        reason: 'Repeated code of conduct violations over 3 tournaments',
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        status: 'active',
+      },
+      {
+        playerId: playerProfiles[5].id,
+        issuedBy: regulators[0].id,
+        type: 'warning',
+        reason: 'Late arrival to scheduled match',
+        tournamentId: tournaments[4].id,
+        startDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
+        status: 'expired',
+      },
+    ]);
+    console.log('✓ Created discipline records');
+
+    // ============ TRAINING PLANS ============
+    console.log('Creating training plans...');
+    const coachProfilesForPlans = await Coach.findAll();
+    // Create training plans one by one to trigger setters properly
+    const trainingPlanData = [
+      {
+        coachId: coachProfilesForPlans[0].id,
+        playerId: playerProfiles[0].id,
+        title: 'Championship Preparation Programme',
+        description: 'Intensive 6-week programme to prepare for the International Championship 2026',
+        category: 'general',
+        startDate: '2026-02-15',
+        endDate: '2026-03-28',
+        status: 'active',
+      },
+      {
+        coachId: coachProfilesForPlans[0].id,
+        playerId: playerProfiles[1].id,
+        title: 'Fitness Conditioning Block',
+        description: 'Focus on court speed and endurance for upcoming tournament season',
+        category: 'fitness',
+        startDate: '2026-01-10',
+        endDate: '2026-02-28',
+        status: 'active',
+      },
+      {
+        coachId: coachProfilesForPlans[1].id,
+        playerId: playerProfiles[2].id,
+        title: 'Mental Toughness & Focus',
+        description: 'Developing resilience and concentration during high-pressure matches',
+        category: 'mental',
+        startDate: '2026-03-01',
+        endDate: '2026-04-15',
+        status: 'active',
+      },
+      {
+        coachId: coachProfilesForPlans[2].id,
+        playerId: playerProfiles[4].id,
+        title: 'Tactical Pattern Development',
+        description: 'Working on tactical shot selection and court positioning',
+        category: 'tactical',
+        startDate: '2025-12-01',
+        endDate: '2026-01-15',
+        status: 'completed',
+      },
+      {
+        coachId: coachProfilesForPlans[3].id,
+        playerId: playerProfiles[6].id,
+        title: 'Drop Shot Mastery',
+        description: 'Technical refinement of drop shots and deceptive play',
+        category: 'technical',
+        startDate: '2026-02-01',
+        endDate: '2026-03-15',
+        status: 'active',
+      },
+    ];
+    const exerciseSets = [
+      ['Front court drives x100', 'Ghosting patterns 20 min', 'Boast and drive drill', 'Cross-court nick practice', 'Interval sprints 10x400m'],
+      ['Court sprints 15x', 'Lunges with racquet', 'Plank holds 3x60s', 'Skipping 15 min', 'Cool-down stretching'],
+      ['Visualization drills 10 min', 'Breathing exercises', 'Pressure point simulation', 'Post-match reflection journal'],
+      ['Pattern play drills', 'Shot selection analysis', 'Video review sessions', 'Opponent study worksheets'],
+      ['Forehand drop x50', 'Backhand drop x50', 'Deception drill with partner', 'Volley drop practice', 'Target accuracy challenge'],
+    ];
+    for (let i = 0; i < trainingPlanData.length; i++) {
+      const plan = await TrainingPlan.create(trainingPlanData[i]);
+      await plan.update({ exercises: exerciseSets[i] });
+    }
+    console.log('✓ Created training plans');
 
     console.log('\n✅ Database seeding completed successfully!\n');
     console.log('🔐 Test Accounts:');

@@ -20,6 +20,9 @@ import tournamentRegistrationRoutes from './routes/tournamentRegistrationRoutes.
 import clubRoutes from './routes/clubRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
+import disciplineRoutes from './routes/disciplineRoutes.js';
+import trainingPlanRoutes from './routes/trainingPlanRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 dotenv.config();
 
@@ -63,6 +66,9 @@ app.use('/api/tournaments', tournamentRegistrationRoutes);
 app.use('/api/clubs', clubRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/disciplines', disciplineRoutes);
+app.use('/api/training-plans', trainingPlanRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

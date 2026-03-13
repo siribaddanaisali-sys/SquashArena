@@ -17,11 +17,20 @@ export default function Navbar() {
           <Link to="/tournaments" className="hover:text-squash-secondary">Tournaments</Link>
           <Link to="/rankings" className="hover:text-squash-secondary">Rankings</Link>
           <Link to="/clubs" className="hover:text-squash-secondary">Clubs</Link>
+          <Link to="/venues" className="hover:text-squash-secondary">Venues</Link>
           <Link to="/head-to-head" className="hover:text-squash-secondary">H2H</Link>
           {user ? (
             <>
               <Link to="/dashboard" className="hover:text-squash-secondary">Dashboard</Link>
+              {(user.role === 'coach' || user.role === 'player') && (
+                <Link to="/training-plans" className="hover:text-squash-secondary">Training</Link>
+              )}
               <NotificationBell />
+              {(user.role === 'regulator' || user.role === 'organiser') && (
+                <Link to="/admin" className="hover:text-squash-secondary font-semibold text-red-500">
+                  🛡️ Admin
+                </Link>
+              )}
               {(user.role === 'regulator' || user.role === 'organiser') && (
                 <Link to="/developer-resources" className="hover:text-squash-secondary font-semibold text-squash-accent">
                   💻 Dev Zone

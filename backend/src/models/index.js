@@ -14,6 +14,8 @@ import Club from './Club.js';
 import ClubMembership from './ClubMembership.js';
 import Notification from './Notification.js';
 import Activity from './Activity.js';
+import Discipline from './Discipline.js';
+import TrainingPlan from './TrainingPlan.js';
 
 // User associations
 User.hasOne(Player, { foreignKey: 'userId' });
@@ -78,6 +80,19 @@ User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
 // Activity associations
 Activity.belongsTo(User, { foreignKey: 'userId', as: 'actor' });
 
+// Discipline associations
+Discipline.belongsTo(Player, { foreignKey: 'playerId', as: 'player' });
+Discipline.belongsTo(User, { foreignKey: 'issuedBy', as: 'issuer' });
+Discipline.belongsTo(Tournament, { foreignKey: 'tournamentId' });
+Discipline.belongsTo(Match, { foreignKey: 'matchId' });
+Player.hasMany(Discipline, { foreignKey: 'playerId', as: 'disciplines' });
+
+// Training Plan associations
+TrainingPlan.belongsTo(Coach, { foreignKey: 'coachId', as: 'coach' });
+TrainingPlan.belongsTo(Player, { foreignKey: 'playerId', as: 'player' });
+Coach.hasMany(TrainingPlan, { foreignKey: 'coachId', as: 'trainingPlans' });
+Player.hasMany(TrainingPlan, { foreignKey: 'playerId', as: 'trainingPlans' });
+
 export {
   User,
   Player,
@@ -95,4 +110,6 @@ export {
   ClubMembership,
   Notification,
   Activity,
+  Discipline,
+  TrainingPlan,
 };
