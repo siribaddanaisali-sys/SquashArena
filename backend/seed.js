@@ -376,12 +376,16 @@ const seedDatabase = async () => {
     ]);
 
     // Create courts for venues
+    const courtTypes = ['glass_show_court', 'glass_back_wall', 'traditional'];
     for (const venue of venues) {
       for (let i = 1; i <= venue.numCourts; i++) {
+        // First court is glass show court, second is glass back wall, rest traditional
+        const courtType = i === 1 ? 'glass_show_court' : i === 2 ? 'glass_back_wall' : 'traditional';
         await Court.create({
           venueId: venue.id,
           courtNumber: i,
-          courtName: `Court ${i}`,
+          courtName: i === 1 ? 'Centre Court' : i === 2 ? 'Glass Court' : `Court ${i}`,
+          courtType,
           status: 'available',
         });
       }

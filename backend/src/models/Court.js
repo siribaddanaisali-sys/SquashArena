@@ -19,6 +19,10 @@ const Court = sequelize.define('Court', {
   courtName: {
     type: DataTypes.STRING,
   },
+  courtType: {
+    type: DataTypes.ENUM('glass_show_court', 'glass_back_wall', 'traditional'),
+    defaultValue: 'traditional',
+  },
   status: {
     type: DataTypes.ENUM('available', 'occupied', 'maintenance'),
     defaultValue: 'available',

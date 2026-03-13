@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticate, authorize } from '../middleware/auth.js';
 import Venue from '../models/Venue.js';
+import Court from '../models/Court.js';
 
 const router = express.Router();
 
@@ -8,7 +9,8 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const venues = await Venue.findAll({
-      order: [['city', 'ASC']],
+      include: [{ model: Court, as: 'Courts' }],
+      order: [['country', 'ASC'], ['city', 'ASC']],
     });
     res.json(venues);
   } catch (error) {
@@ -19,7 +21,9 @@ router.get('/', async (req, res) => {
 // Get venue by ID
 router.get('/:id', async (req, res) => {
   try {
-    const venue = await Venue.findByPk(req.params.id);
+    const venue = await Venue.findByPk(req.params.id, {
+      include: [{ model: Court, as: 'Courts' }],
+    });
     if (!venue) {
       return res.status(404).json({ error: 'Venue not found' });
     }
