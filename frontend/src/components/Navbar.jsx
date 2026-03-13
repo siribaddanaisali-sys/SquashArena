@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -15,10 +16,12 @@ export default function Navbar() {
           <Link to="/players" className="hover:text-squash-secondary">Players</Link>
           <Link to="/tournaments" className="hover:text-squash-secondary">Tournaments</Link>
           <Link to="/rankings" className="hover:text-squash-secondary">Rankings</Link>
+          <Link to="/clubs" className="hover:text-squash-secondary">Clubs</Link>
           <Link to="/head-to-head" className="hover:text-squash-secondary">H2H</Link>
           {user ? (
             <>
               <Link to="/dashboard" className="hover:text-squash-secondary">Dashboard</Link>
+              <NotificationBell />
               {(user.role === 'regulator' || user.role === 'organiser') && (
                 <Link to="/developer-resources" className="hover:text-squash-secondary font-semibold text-squash-accent">
                   💻 Dev Zone

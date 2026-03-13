@@ -14,6 +14,9 @@ import TournamentDetail from './pages/TournamentDetail';
 import Rankings from './pages/Rankings';
 import HeadToHead from './pages/HeadToHead';
 import Dashboard from './pages/Dashboard';
+import LiveScoring from './pages/LiveScoring';
+import Clubs from './pages/Clubs';
+import ClubDetail from './pages/ClubDetail';
 import DeveloperResourcesDashboard from './pages/developer-resources/DeveloperResourcesDashboard';
 import SRSPage from './pages/developer-resources/SRSPage';
 import ArchitecturePage from './pages/developer-resources/ArchitecturePage';
@@ -34,6 +37,9 @@ export default function App() {
           <Route path="/rankings" element={<Layout><Rankings /></Layout>} />
           <Route path="/head-to-head" element={<Layout><HeadToHead /></Layout>} />
           <Route path="/dashboard" element={<PrivateRoute><Layout><Dashboard /></Layout></PrivateRoute>} />
+          <Route path="/live-scoring/:matchId" element={<PrivateRoute><Layout><LiveScoring /></Layout></PrivateRoute>} />
+          <Route path="/clubs" element={<Layout><Clubs /></Layout>} />
+          <Route path="/clubs/:id" element={<Layout><ClubDetail /></Layout>} />
           
           {/* Developer Resources Routes (Admin Only) */}
           <Route path="/developer-resources" element={<AdminRoute><DeveloperResourcesDashboard /></AdminRoute>} />

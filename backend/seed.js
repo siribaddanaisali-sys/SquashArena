@@ -12,6 +12,10 @@ import PlayerCoach from './src/models/PlayerCoach.js';
 import TournamentRegistration from './src/models/TournamentRegistration.js';
 import TournamentDraw from './src/models/TournamentDraw.js';
 import PlayerEloHistory from './src/models/PlayerEloHistory.js';
+import Club from './src/models/Club.js';
+import ClubMembership from './src/models/ClubMembership.js';
+import Notification from './src/models/Notification.js';
+import Activity from './src/models/Activity.js';
 
 const seedDatabase = async () => {
   try {
@@ -581,6 +585,89 @@ const seedDatabase = async () => {
     }
 
     console.log('✓ Created tournament registrations');
+
+    // ============ CLUBS ============
+    console.log('Creating clubs...');
+    const clubs = await Club.bulkCreate([
+      {
+        name: 'Islamabad Squash Club',
+        description: 'Premier squash club in the capital city with world-class courts and coaching.',
+        city: 'Islamabad',
+        country: 'Pakistan',
+        address: 'F-6/2, Blue Area, Islamabad',
+        website: 'https://islamabadsquash.pk',
+        contactEmail: 'info@islamabadsquash.pk',
+        contactPhone: '+92-51-2345678',
+        memberCount: 3,
+        foundedYear: 2015,
+        status: 'active',
+        ownerId: players[0].id,
+      },
+      {
+        name: 'Cairo Squash Academy',
+        description: 'Egypt\'s leading squash training academy, home to many world champions.',
+        city: 'Cairo',
+        country: 'Egypt',
+        address: '15 Nile Corniche, Garden City, Cairo',
+        website: 'https://cairosquash.eg',
+        contactEmail: 'contact@cairosquash.eg',
+        memberCount: 2,
+        foundedYear: 2010,
+        status: 'active',
+        ownerId: players[4].id,
+      },
+      {
+        name: 'London Rackets Club',
+        description: 'Historic London club offering squash, racketball, and social events.',
+        city: 'London',
+        country: 'United Kingdom',
+        address: '22 Marylebone Road, London NW1',
+        contactEmail: 'membership@londonrackets.co.uk',
+        memberCount: 2,
+        foundedYear: 1998,
+        status: 'active',
+        ownerId: players[5].id,
+      },
+    ]);
+    console.log('✓ Created clubs');
+
+    // ============ CLUB MEMBERSHIPS ============
+    console.log('Creating club memberships...');
+    await ClubMembership.bulkCreate([
+      { clubId: clubs[0].id, userId: players[0].id, role: 'admin', status: 'active', joinedAt: new Date() },
+      { clubId: clubs[0].id, userId: players[1].id, role: 'member', status: 'active', joinedAt: new Date() },
+      { clubId: clubs[0].id, userId: players[2].id, role: 'captain', status: 'active', joinedAt: new Date() },
+      { clubId: clubs[1].id, userId: players[4].id, role: 'admin', status: 'active', joinedAt: new Date() },
+      { clubId: clubs[1].id, userId: players[3].id, role: 'member', status: 'active', joinedAt: new Date() },
+      { clubId: clubs[2].id, userId: players[5].id, role: 'admin', status: 'active', joinedAt: new Date() },
+      { clubId: clubs[2].id, userId: players[6].id, role: 'member', status: 'active', joinedAt: new Date() },
+    ]);
+    console.log('✓ Created club memberships');
+
+    // ============ ACTIVITIES ============
+    console.log('Creating activities...');
+    await Activity.bulkCreate([
+      { type: 'tournament_created', title: 'New Tournament Created', description: 'Pakistan Open 2025 has been announced!', userId: organizers[0].id },
+      { type: 'tournament_created', title: 'New Tournament Created', description: 'British Open 2025 is now open for registration.', userId: organizers[0].id },
+      { type: 'club_created', title: 'New Club Founded', description: 'Islamabad Squash Club has opened its doors.', userId: players[0].id },
+      { type: 'club_created', title: 'New Club Founded', description: 'Cairo Squash Academy is now active.', userId: players[4].id },
+      { type: 'player_registered', title: 'New Player Registered', description: 'Ali Khan has joined the platform.', userId: players[0].id },
+      { type: 'player_registered', title: 'New Player Registered', description: 'Aisha Malik has joined the platform.', userId: players[1].id },
+      { type: 'club_joined', title: 'New Club Member', description: 'Hassan Ahmed joined Islamabad Squash Club.', userId: players[2].id },
+    ]);
+    console.log('✓ Created activities');
+
+    // ============ NOTIFICATIONS ============
+    console.log('Creating notifications...');
+    await Notification.bulkCreate([
+      { userId: players[0].id, type: 'tournament_update', title: 'Tournament Starting Soon', message: 'Pakistan Open 2025 begins next week. Make sure you are ready!', isRead: false },
+      { userId: players[0].id, type: 'registration_confirmed', title: 'Registration Confirmed', message: 'You are confirmed for Pakistan Open 2025.', isRead: true },
+      { userId: players[0].id, type: 'club_invite', title: 'Club Welcome', message: 'Welcome to Islamabad Squash Club! Check out our schedule.', isRead: true },
+      { userId: players[1].id, type: 'tournament_update', title: 'Draw Released', message: 'The draw for Pakistan Open 2025 has been released.', isRead: false },
+      { userId: players[1].id, type: 'general', title: 'Welcome to Squash Arena', message: 'Your profile is set up. Start exploring tournaments and players!', isRead: false },
+      { userId: players[2].id, type: 'match_scheduled', title: 'Match Scheduled', message: 'You have a match scheduled in Pakistan Open 2025.', isRead: false },
+    ]);
+    console.log('✓ Created notifications');
 
     console.log('\n✅ Database seeding completed successfully!\n');
     console.log('🔐 Test Accounts:');

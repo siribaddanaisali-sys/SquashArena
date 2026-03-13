@@ -10,6 +10,10 @@ import PlayerCoach from './PlayerCoach.js';
 import TournamentRegistration from './TournamentRegistration.js';
 import TournamentDraw from './TournamentDraw.js';
 import PlayerEloHistory from './PlayerEloHistory.js';
+import Club from './Club.js';
+import ClubMembership from './ClubMembership.js';
+import Notification from './Notification.js';
+import Activity from './Activity.js';
 
 // User associations
 User.hasOne(Player, { foreignKey: 'userId' });
@@ -57,6 +61,23 @@ PlayerEloHistory.belongsTo(Player, { foreignKey: 'playerId' });
 PlayerEloHistory.belongsTo(Match, { foreignKey: 'matchId' });
 Player.hasMany(PlayerEloHistory, { foreignKey: 'playerId', as: 'eloHistory' });
 
+// Club associations
+Club.belongsTo(User, { foreignKey: 'ownerId', as: 'owner' });
+User.hasMany(Club, { foreignKey: 'ownerId', as: 'ownedClubs' });
+
+// Club Membership associations
+ClubMembership.belongsTo(Club, { foreignKey: 'clubId' });
+ClubMembership.belongsTo(User, { foreignKey: 'userId' });
+Club.hasMany(ClubMembership, { foreignKey: 'clubId', as: 'memberships' });
+User.hasMany(ClubMembership, { foreignKey: 'userId', as: 'clubMemberships' });
+
+// Notification associations
+Notification.belongsTo(User, { foreignKey: 'userId' });
+User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
+
+// Activity associations
+Activity.belongsTo(User, { foreignKey: 'userId', as: 'actor' });
+
 export {
   User,
   Player,
@@ -70,4 +91,8 @@ export {
   TournamentRegistration,
   TournamentDraw,
   PlayerEloHistory,
+  Club,
+  ClubMembership,
+  Notification,
+  Activity,
 };
