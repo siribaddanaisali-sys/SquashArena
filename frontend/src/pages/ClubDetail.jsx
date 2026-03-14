@@ -9,6 +9,7 @@ export default function ClubDetail() {
   const [club, setClub] = useState(null);
   const [members, setMembers] = useState([]);
   const [membership, setMembership] = useState(null);
+  const [pendingRequests, setPendingRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -28,6 +29,14 @@ export default function ClubDetail() {
         try {
           const mem = await api.get(`/clubs/${id}/my-membership`);
           setMembership(mem);
+
+          // If user is club admin, fetch pending requests
+          if (mem.role === 'admin' || data.club.ownerId === user?.id) {
+            try {
+              const pending = await api.get(`/clubs/${id}/pending`);
+              setPendingRequests(Array.isArray(pending) ? pending : []);
+            } catch (e) {}
+          }
         } catch (e) {}
       }
     } catch (err) {
@@ -43,7 +52,7 @@ export default function ClubDetail() {
       await api.post(`/clubs/${id}/join`);
       await fetchClubData();
     } catch (err) {
-      alert('Failed to join: ' + err.message);
+      alert('Failed to request: ' + err.message);
     } finally {
       setActionLoading(false);
     }
@@ -61,11 +70,31 @@ export default function ClubDetail() {
     }
   };
 
+  const handleApprove = async (membershipId) => {
+    try {
+      await api.post(`/clubs/${id}/approve/${membershipId}`);
+      await fetchClubData();
+    } catch (err) {
+      alert('Failed to approve: ' + err.message);
+    }
+  };
+
+  const handleReject = async (membershipId) => {
+    try {
+      await api.post(`/clubs/${id}/reject/${membershipId}`);
+      await fetchClubData();
+    } catch (err) {
+      alert('Failed to reject: ' + err.message);
+    }
+  };
+
   if (loading) return <div className="text-center py-12 text-lg">Loading club...</div>;
   if (error) return <div className="text-center py-12 text-red-600">Error: {error}</div>;
   if (!club) return <div className="text-center py-12">Club not found</div>;
 
   const isMember = membership?.isMember;
+  const isPending = membership?.isPending;
+  const isAdmin = membership?.role === 'admin' || club.ownerId === user?.id;
 
   return (
     <div>
@@ -87,11 +116,16 @@ export default function ClubDetail() {
             {club.description && <p className="text-gray-600 mt-3">{club.description}</p>}
           </div>
           <div>
-            {token && !isMember && (
+            {token && !isMember && !isPending && (
               <button onClick={handleJoin} disabled={actionLoading}
                 className="bg-squash-primary text-white px-6 py-2 rounded-lg hover:opacity-90 font-semibold disabled:opacity-50">
-                {actionLoading ? 'Joining...' : 'Join Club'}
+                {actionLoading ? 'Sending...' : 'Request to Join'}
               </button>
+            )}
+            {token && isPending && (
+              <span className="inline-block bg-yellow-100 text-yellow-700 px-4 py-2 rounded-lg text-sm font-semibold">
+                ⏳ Pending Approval
+              </span>
             )}
             {token && isMember && (
               <div className="text-right">
@@ -140,6 +174,41 @@ export default function ClubDetail() {
           <p>{club.owner?.firstName} {club.owner?.lastName}</p>
         </div>
       </div>
+
+      {/* Pending Join Requests (Admin Only) */}
+      {isAdmin && pendingRequests.length > 0 && (
+        <div className="card mb-6 border-l-4 border-yellow-400">
+          <h2 className="text-xl font-bold mb-4">Pending Join Requests ({pendingRequests.length})</h2>
+          <div className="divide-y">
+            {pendingRequests.map(req => (
+              <div key={req.id} className="py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-yellow-50 rounded-full flex items-center justify-center text-sm font-bold text-yellow-600">
+                    {req.User?.firstName?.[0]}{req.User?.lastName?.[0]}
+                  </div>
+                  <div>
+                    <span className="font-semibold">{req.User?.firstName} {req.User?.lastName}</span>
+                    <p className="text-xs text-gray-500">
+                      {req.User?.email} · Requested {new Date(req.createdAt).toLocaleDateString()}
+                      {req.User?.Player ? ` · ELO ${parseFloat(req.User.Player.eloRating || 1500).toFixed(0)}` : ''}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => handleApprove(req.id)}
+                    className="bg-green-500 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-green-600">
+                    Approve
+                  </button>
+                  <button onClick={() => handleReject(req.id)}
+                    className="bg-red-500 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-red-600">
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Members */}
       <div className="card">
