@@ -193,4 +193,34 @@ router.put('/users/:id/region', authenticate, authorize('super_admin'), async (r
   }
 });
 
+// ==========================================
+// DATABASE VIEWER (super_admin / regulator only)
+// ==========================================
+router.get('/database-viewer', authenticate, authorize('regulator', 'super_admin'), async (req, res) => {
+  try {
+    const { QueryTypes } = await import('sequelize');
+    const sequelize = (await import('../../config/database.js')).default;
+
+    const tableRows = await sequelize.query('SHOW TABLES', { type: QueryTypes.SELECT });
+    const tableKey = Object.keys(tableRows[0])[0];
+    const tableNames = tableRows.map(t => t[tableKey]);
+
+    const tables = {};
+    for (const name of tableNames) {
+      const columns = await sequelize.query(`SHOW COLUMNS FROM \`${name}\``, { type: QueryTypes.SELECT });
+      const rows = await sequelize.query(`SELECT * FROM \`${name}\` LIMIT 200`, { type: QueryTypes.SELECT });
+      const [countResult] = await sequelize.query(`SELECT COUNT(*) as total FROM \`${name}\``, { type: QueryTypes.SELECT });
+      tables[name] = {
+        columns: columns.map(c => ({ field: c.Field, type: c.Type, key: c.Key, nullable: c.Null, default: c.Default })),
+        rows,
+        total: countResult.total,
+      };
+    }
+
+    res.json({ tables });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

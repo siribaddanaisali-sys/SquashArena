@@ -25,6 +25,7 @@ import DeveloperResourcesDashboard from './pages/developer-resources/DeveloperRe
 import SRSPage from './pages/developer-resources/SRSPage';
 import ArchitecturePage from './pages/developer-resources/ArchitecturePage';
 import TechStackPage from './pages/developer-resources/TechStackPage';
+import DatabaseViewerPage from './pages/developer-resources/DatabaseViewerPage';
 
 export default function App() {
   return (
@@ -54,6 +55,7 @@ export default function App() {
           <Route path="/developer-resources/srs" element={<AdminRoute><SRSPage /></AdminRoute>} />
           <Route path="/developer-resources/architecture" element={<AdminRoute><ArchitecturePage /></AdminRoute>} />
           <Route path="/developer-resources/tech-stack" element={<AdminRoute><TechStackPage /></AdminRoute>} />
+          <Route path="/developer-resources/database" element={<AdminRoute><DatabaseViewerPage /></AdminRoute>} />
         </Routes>
       </Router>
     </AuthProvider>

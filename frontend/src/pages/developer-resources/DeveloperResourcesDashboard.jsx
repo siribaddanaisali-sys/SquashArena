@@ -32,6 +32,13 @@ export default function DeveloperResourcesDashboard() {
       path: '/developer-resources/api',
       color: 'from-orange-400 to-orange-600',
     },
+    {
+      title: 'Database Viewer',
+      description: 'Browse all database tables, schemas, and live data in the system',
+      icon: '🗄️',
+      path: '/developer-resources/database',
+      color: 'from-cyan-400 to-cyan-600',
+    },
   ];
 
   return (

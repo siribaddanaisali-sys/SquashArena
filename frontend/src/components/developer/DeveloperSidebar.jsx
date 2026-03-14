@@ -11,6 +11,7 @@ export default function DeveloperSidebar() {
     { path: '/developer-resources/srs', label: 'SRS Document', icon: '📄' },
     { path: '/developer-resources/architecture', label: 'System Architecture', icon: '🏗️' },
     { path: '/developer-resources/tech-stack', label: 'Technology Stack', icon: '🛠️' },
+    { path: '/developer-resources/database', label: 'Database Viewer', icon: '🗄️' },
   ];
 
   return (
