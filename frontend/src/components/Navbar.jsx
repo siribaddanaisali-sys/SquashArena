@@ -31,7 +31,7 @@ export default function Navbar() {
                   🛡️ Admin
                 </Link>
               )}
-              {(user.role === 'regulator' || user.role === 'organiser' || user.role === 'super_admin') && (
+              {(user.role === 'regulator' || user.role === 'super_admin') && (
                 <Link to="/developer-resources" className="hover:text-squash-secondary font-semibold text-squash-accent">
                   💻 Dev Zone
                 </Link>

@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
+import DevRoute from './components/DevRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -50,12 +51,12 @@ export default function App() {
           <Route path="/training-plans" element={<PrivateRoute><Layout><TrainingPlans /></Layout></PrivateRoute>} />
           <Route path="/admin" element={<AdminRoute><Layout><AdminPanel /></Layout></AdminRoute>} />
           
-          {/* Developer Resources Routes (Admin Only) */}
-          <Route path="/developer-resources" element={<AdminRoute><DeveloperResourcesDashboard /></AdminRoute>} />
-          <Route path="/developer-resources/srs" element={<AdminRoute><SRSPage /></AdminRoute>} />
-          <Route path="/developer-resources/architecture" element={<AdminRoute><ArchitecturePage /></AdminRoute>} />
-          <Route path="/developer-resources/tech-stack" element={<AdminRoute><TechStackPage /></AdminRoute>} />
-          <Route path="/developer-resources/database" element={<AdminRoute><DatabaseViewerPage /></AdminRoute>} />
+          {/* Developer Resources Routes (Regulator & Super Admin Only) */}
+          <Route path="/developer-resources" element={<DevRoute><DeveloperResourcesDashboard /></DevRoute>} />
+          <Route path="/developer-resources/srs" element={<DevRoute><SRSPage /></DevRoute>} />
+          <Route path="/developer-resources/architecture" element={<DevRoute><ArchitecturePage /></DevRoute>} />
+          <Route path="/developer-resources/tech-stack" element={<DevRoute><TechStackPage /></DevRoute>} />
+          <Route path="/developer-resources/database" element={<DevRoute><DatabaseViewerPage /></DevRoute>} />
         </Routes>
       </Router>
     </AuthProvider>
