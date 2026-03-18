@@ -11,6 +11,8 @@ import Register from './pages/Register';
 import Players from './pages/Players';
 import PlayerDetail from './pages/PlayerDetail';
 import PlayerStats from './pages/PlayerStats';
+import Coaches from './pages/Coaches';
+import CoachDetail from './pages/CoachDetail';
 import Tournaments from './pages/Tournaments';
 import TournamentDetail from './pages/TournamentDetail';
 import Rankings from './pages/Rankings';
@@ -39,6 +41,8 @@ export default function App() {
           <Route path="/players" element={<Layout><Players /></Layout>} />
           <Route path="/players/:id" element={<Layout><PlayerDetail /></Layout>} />
           <Route path="/players/:id/stats" element={<Layout><PlayerStats /></Layout>} />
+          <Route path="/coaches" element={<Layout><Coaches /></Layout>} />
+          <Route path="/coaches/:id" element={<Layout><CoachDetail /></Layout>} />
           <Route path="/tournaments" element={<Layout><Tournaments /></Layout>} />
           <Route path="/tournaments/:id" element={<Layout><TournamentDetail /></Layout>} />
           <Route path="/rankings" element={<Layout><Rankings /></Layout>} />

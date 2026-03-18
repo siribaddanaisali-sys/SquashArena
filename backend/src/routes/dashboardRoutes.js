@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
-import { User, Player, Match, Tournament, TournamentRegistration, Ranking, Activity, Club, ClubMembership } from '../models/index.js';
+import { User, Player, Match, Tournament, TournamentRegistration, Ranking, Activity, Club, ClubMembership, Coach, PlayerCoach } from '../models/index.js';
 
 const router = express.Router();
 
@@ -65,6 +65,27 @@ router.get('/player', authenticate, async (req, res) => {
       include: [{ model: Club, attributes: ['id', 'name', 'city', 'country'] }],
     });
 
+    // Current and pending coaches
+    const coachLinks = await PlayerCoach.findAll({
+      where: { playerId: player.id, status: { [Op.in]: ['active', 'pending'] } },
+      include: [{
+        model: Coach,
+        include: [{ model: User, attributes: ['firstName', 'lastName', 'profilePicture'] }],
+      }],
+    });
+    const mapCoachLink = l => ({
+      linkId: l.id,
+      coachId: l.Coach.id,
+      name: `${l.Coach.User.firstName} ${l.Coach.User.lastName}`,
+      profilePicture: l.Coach.User.profilePicture,
+      certification: l.Coach.certification,
+      specialization: l.Coach.specialization,
+      startDate: l.startDate,
+      status: l.status,
+    });
+    const currentCoaches = coachLinks.filter(l => l.status === 'active').map(mapCoachLink);
+    const pendingCoaches = coachLinks.filter(l => l.status === 'pending').map(mapCoachLink);
+
     const completedMatches = await Match.count({
       where: {
         [Op.or]: [{ player1Id: player.id }, { player2Id: player.id }],
@@ -89,6 +110,8 @@ router.get('/player', authenticate, async (req, res) => {
       recentMatches,
       registeredTournaments: registrations,
       clubs: clubMemberships,
+      currentCoaches,
+      pendingCoaches,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -153,16 +176,25 @@ router.get('/coach', authenticate, async (req, res) => {
     const coach = await Coach.findOne({ where: { userId: req.userId } });
     if (!coach) return res.status(404).json({ error: 'Coach profile not found' });
 
-    const playerLinks = await PlayerCoach.findAll({
-      where: { coachId: coach.id },
+    // Active players
+    const activeLinks = await PlayerCoach.findAll({
+      where: { coachId: coach.id, status: 'active' },
     });
-
-    const playerIds = playerLinks.map(pl => pl.playerId);
-
+    const activePlayerIds = activeLinks.map(pl => pl.playerId);
     const players = await Player.findAll({
-      where: { id: { [Op.in]: playerIds } },
+      where: { id: { [Op.in]: activePlayerIds } },
       include: [{ model: User, attributes: ['firstName', 'lastName'] }],
       order: [['ranking', 'ASC']],
+    });
+
+    // Pending requests
+    const pendingLinks = await PlayerCoach.findAll({
+      where: { coachId: coach.id, status: 'pending' },
+      include: [{
+        model: Player,
+        include: [{ model: User, attributes: ['firstName', 'lastName', 'profilePicture'] }],
+      }],
+      order: [['createdAt', 'DESC']],
     });
 
     res.json({
@@ -182,6 +214,15 @@ router.get('/coach', authenticate, async (req, res) => {
         nationality: p.nationality,
       })),
       totalPlayers: players.length,
+      pendingRequests: pendingLinks.map(l => ({
+        linkId: l.id,
+        playerId: l.Player.id,
+        name: `${l.Player.User.firstName} ${l.Player.User.lastName}`,
+        profilePicture: l.Player.User.profilePicture,
+        ranking: l.Player.ranking,
+        eloRating: l.Player.eloRating,
+        requestedAt: l.createdAt,
+      })),
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

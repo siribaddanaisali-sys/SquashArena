@@ -39,3 +39,17 @@ export const regionGuard = (getRegionId) => {
     next();
   };
 };
+
+// Ownership check: organisers can only manage resources they own
+// SuperAdmin and Admin bypass this check
+export const ownershipCheck = (getOwnerId) => {
+  return async (req, res, next) => {
+    if (['super_admin', 'admin'].includes(req.userRole)) return next();
+
+    const ownerId = typeof getOwnerId === 'function' ? await getOwnerId(req) : null;
+    if (ownerId && ownerId !== req.userId) {
+      return res.status(403).json({ error: 'Access denied: you do not own this resource' });
+    }
+    next();
+  };
+};

@@ -14,6 +14,7 @@ export default function Navbar() {
         </Link>
         <div className="flex gap-6 items-center">
           <Link to="/players" className="hover:text-squash-secondary">Players</Link>
+          <Link to="/coaches" className="hover:text-squash-secondary">Coaches</Link>
           <Link to="/tournaments" className="hover:text-squash-secondary">Tournaments</Link>
           <Link to="/rankings" className="hover:text-squash-secondary">Rankings</Link>
           <Link to="/clubs" className="hover:text-squash-secondary">Clubs</Link>
@@ -26,7 +27,7 @@ export default function Navbar() {
                 <Link to="/training-plans" className="hover:text-squash-secondary">Training</Link>
               )}
               <NotificationBell />
-              {(user.role === 'regulator' || user.role === 'organiser' || user.role === 'super_admin') && (
+              {(user.role === 'regulator' || user.role === 'organiser' || user.role === 'super_admin' || user.role === 'admin') && (
                 <Link to="/admin" className="hover:text-squash-secondary font-semibold text-red-500">
                   🛡️ Admin
                 </Link>

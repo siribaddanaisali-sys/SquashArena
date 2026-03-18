@@ -246,6 +246,7 @@ const seedDatabase = async () => {
         lastName: 'Coaching',
         role: 'coach',
         isActive: true,
+        regionId: regions[0].id, // Egypt
       },
       {
         email: 'coach.sara@squash.com',
@@ -254,6 +255,7 @@ const seedDatabase = async () => {
         lastName: 'Coaching',
         role: 'coach',
         isActive: true,
+        regionId: regions[1].id, // UK
       },
       {
         email: 'coach.john@squash.com',
@@ -262,6 +264,7 @@ const seedDatabase = async () => {
         lastName: 'Coaching',
         role: 'coach',
         isActive: true,
+        regionId: regions[4].id, // US
       },
       {
         email: 'coach.maria@squash.com',
@@ -270,6 +273,7 @@ const seedDatabase = async () => {
         lastName: 'Coaching',
         role: 'coach',
         isActive: true,
+        regionId: regions[3].id, // Sri Lanka
       },
       {
         email: 'coach.rajesh@squash.com',
@@ -278,6 +282,7 @@ const seedDatabase = async () => {
         lastName: 'Coaching',
         role: 'coach',
         isActive: true,
+        regionId: regions[5].id, // Australia
       },
     ]);
 
@@ -368,6 +373,39 @@ const seedDatabase = async () => {
       regionId: null,
     });
     console.log('✓ Created 1 super admin (superadmin@squash.com / Test@123)');
+
+    // ============ ADMINS (region-scoped) ============
+    console.log('Creating admins...');
+    const admins = await User.bulkCreate([
+      {
+        email: 'admin.egypt@squash.com',
+        password: hashedPassword,
+        firstName: 'Nour',
+        lastName: 'Hassan',
+        role: 'admin',
+        isActive: true,
+        regionId: regions[0].id, // Egypt
+      },
+      {
+        email: 'admin.uk@squash.com',
+        password: hashedPassword,
+        firstName: 'James',
+        lastName: 'Wright',
+        role: 'admin',
+        isActive: true,
+        regionId: regions[1].id, // UK
+      },
+      {
+        email: 'admin.lk@squash.com',
+        password: hashedPassword,
+        firstName: 'Kamal',
+        lastName: 'Perera',
+        role: 'admin',
+        isActive: true,
+        regionId: regions[3].id, // Sri Lanka
+      },
+    ]);
+    console.log('✓ Created 3 admins (admin.egypt@squash.com, admin.uk@squash.com, admin.lk@squash.com / Test@123)');
 
     // ============ VENUES & COURTS ============
     console.log('Creating venues and courts...');

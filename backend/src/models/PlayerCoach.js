@@ -25,8 +25,8 @@ const PlayerCoach = sequelize.define('PlayerCoach', {
     type: DataTypes.DATE,
   },
   status: {
-    type: DataTypes.ENUM('active', 'inactive'),
-    defaultValue: 'active',
+    type: DataTypes.ENUM('pending', 'active', 'inactive', 'rejected'),
+    defaultValue: 'pending',
   },
 }, {
   tableName: 'player_coaches',

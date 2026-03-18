@@ -46,7 +46,90 @@ export default function Dashboard() {
 }
 
 function PlayerDashboard({ data }) {
-  const { player, upcomingMatches, recentMatches, registeredTournaments, clubs } = data;
+  const { player, upcomingMatches, recentMatches, registeredTournaments, clubs, currentCoaches, pendingCoaches } = data;
+  const [showCoachPicker, setShowCoachPicker] = useState(false);
+  const [coachSearch, setCoachSearch] = useState('');
+  const [countryFilter, setCountryFilter] = useState('');
+  const [availableCoaches, setAvailableCoaches] = useState([]);
+  const [countryList, setCountryList] = useState([]);
+  const [loadingCoaches, setLoadingCoaches] = useState(false);
+  const [myCoaches, setMyCoaches] = useState(currentCoaches || []);
+  const [myPendingCoaches, setMyPendingCoaches] = useState(pendingCoaches || []);
+  const [expandedCountries, setExpandedCountries] = useState({});
+
+  const fetchAvailableCoaches = async (search = '', country = '') => {
+    try {
+      setLoadingCoaches(true);
+      const params = new URLSearchParams();
+      if (search) params.set('search', search);
+      if (country) params.set('country', country);
+      const qs = params.toString();
+      const result = await api.get(`/players/coaches/available${qs ? `?${qs}` : ''}`);
+      setAvailableCoaches(result.groups || []);
+      if (result.countries) setCountryList(result.countries);
+    } catch (err) {
+      console.error('Failed to load coaches:', err);
+    } finally {
+      setLoadingCoaches(false);
+    }
+  };
+
+  const openCoachPicker = () => {
+    setShowCoachPicker(true);
+    setCountryFilter('');
+    fetchAvailableCoaches();
+  };
+
+  const handleCoachSearch = (e) => {
+    const val = e.target.value;
+    setCoachSearch(val);
+    fetchAvailableCoaches(val, countryFilter);
+  };
+
+  const handleCountryFilter = (e) => {
+    const val = e.target.value;
+    setCountryFilter(val);
+    fetchAvailableCoaches(coachSearch, val);
+  };
+
+  const assignCoach = async (coachId) => {
+    try {
+      await api.post('/players/my/coaches', { coachId });
+      const updated = await api.get('/players/my/coaches');
+      setMyCoaches(updated.current || []);
+      setMyPendingCoaches(updated.pending || []);
+      setShowCoachPicker(false);
+      setCoachSearch('');
+      setCountryFilter('');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to send request');
+    }
+  };
+
+  const removeCoach = async (linkId) => {
+    if (!confirm('Remove this coach?')) return;
+    try {
+      await api.delete(`/players/my/coaches/${linkId}`);
+      setMyCoaches(prev => prev.filter(c => c.linkId !== linkId));
+      setMyPendingCoaches(prev => prev.filter(c => c.linkId !== linkId));
+    } catch (err) {
+      alert('Failed to remove coach');
+    }
+  };
+
+  const toggleCountry = (country) => {
+    setExpandedCountries(prev => ({ ...prev, [country]: !prev[country] }));
+  };
+
+  const isAssignedOrPending = (coachId) => {
+    return myCoaches.some(mc => mc.coachId === coachId) || myPendingCoaches.some(mc => mc.coachId === coachId);
+  };
+
+  const getCoachStatus = (coachId) => {
+    if (myCoaches.some(mc => mc.coachId === coachId)) return 'active';
+    if (myPendingCoaches.some(mc => mc.coachId === coachId)) return 'pending';
+    return null;
+  };
 
   return (
     <>
@@ -160,6 +243,157 @@ function PlayerDashboard({ data }) {
           )}
         </div>
       </div>
+
+      {/* My Coach Section */}
+      <div className="card mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">My Coach</h2>
+          <button onClick={openCoachPicker} className="btn-primary text-sm px-4 py-2">
+            {myCoaches.length > 0 ? 'Change Coach' : 'Select Coach'}
+          </button>
+        </div>
+
+        {/* Active Coaches */}
+        {myCoaches.length > 0 && (
+          <div className="divide-y">
+            {myCoaches.map(c => (
+              <div key={c.linkId} className="py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-squash-primary text-white flex items-center justify-center font-bold">
+                    {c.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-semibold">{c.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {c.certification && <span className="mr-2">{c.certification}</span>}
+                      {c.specialization && <span>· {c.specialization}</span>}
+                    </p>
+                    <p className="text-xs text-gray-400">Since {new Date(c.startDate).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <button onClick={() => removeCoach(c.linkId)} className="text-red-500 hover:text-red-700 text-sm font-semibold">
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Pending Coaches */}
+        {myPendingCoaches.length > 0 && (
+          <div className={myCoaches.length > 0 ? 'mt-4 pt-4 border-t' : ''}>
+            <p className="text-sm font-semibold text-yellow-600 mb-2">Pending Approval</p>
+            <div className="divide-y">
+              {myPendingCoaches.map(c => (
+                <div key={c.linkId} className="py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-yellow-100 text-yellow-700 flex items-center justify-center font-bold">
+                      {c.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold">{c.name}
+                        <span className="ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-yellow-100 text-yellow-700">Pending</span>
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {c.certification && <span className="mr-2">{c.certification}</span>}
+                        {c.specialization && <span>· {c.specialization}</span>}
+                      </p>
+                      <p className="text-xs text-gray-400">Requested {new Date(c.startDate).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => removeCoach(c.linkId)} className="text-gray-400 hover:text-red-500 text-sm font-semibold">
+                    Cancel
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {myCoaches.length === 0 && myPendingCoaches.length === 0 && (
+          <p className="text-gray-500">No coach selected. Selecting a coach is optional.</p>
+        )}
+      </div>
+
+      {/* Coach Picker Modal */}
+      {showCoachPicker && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+            <div className="p-4 border-b">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold">Select a Coach</h3>
+                <button onClick={() => { setShowCoachPicker(false); setCoachSearch(''); setCountryFilter(''); }} className="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Search by name..."
+                  value={coachSearch}
+                  onChange={handleCoachSearch}
+                  className="input flex-1"
+                  autoFocus
+                />
+                <select
+                  value={countryFilter}
+                  onChange={handleCountryFilter}
+                  className="input w-40"
+                >
+                  <option value="">All Countries</option>
+                  {countryList.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="overflow-y-auto flex-1 p-4">
+              {loadingCoaches ? (
+                <p className="text-center text-gray-500 py-8">Loading coaches...</p>
+              ) : availableCoaches.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">No coaches found</p>
+              ) : (
+                availableCoaches.map(group => (
+                  <div key={group.country} className="mb-3">
+                    <button
+                      onClick={() => toggleCountry(group.country)}
+                      className="w-full flex items-center justify-between py-2 px-3 bg-gray-100 rounded-lg font-semibold text-sm hover:bg-gray-200"
+                    >
+                      <span>{group.country} ({group.coaches.length})</span>
+                      <span className="text-gray-400">{expandedCountries[group.country] ? '▲' : '▼'}</span>
+                    </button>
+                    {expandedCountries[group.country] && (
+                      <div className="mt-1 divide-y ml-2">
+                        {group.coaches.map(c => {
+                          const status = getCoachStatus(c.id);
+                          return (
+                            <div key={c.id} className="py-2 flex items-center justify-between">
+                              <div>
+                                <p className="font-semibold">{c.firstName} {c.lastName}</p>
+                                <p className="text-xs text-gray-500">
+                                  {c.certification && <span className="mr-2">{c.certification}</span>}
+                                  {c.specialization && <span>· {c.specialization}</span>}
+                                  {c.experience > 0 && <span> · {c.experience} yrs exp</span>}
+                                </p>
+                              </div>
+                              {status === 'active' ? (
+                                <span className="text-xs text-green-600 font-semibold">Assigned</span>
+                              ) : status === 'pending' ? (
+                                <span className="text-xs text-yellow-600 font-semibold">Pending</span>
+                              ) : (
+                                <button onClick={() => assignCoach(c.id)} className="btn-primary text-xs px-3 py-1">Select</button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -211,15 +445,69 @@ function OrganiserDashboard({ data }) {
 }
 
 function CoachDashboard({ data }) {
-  const { coach, players } = data;
+  const { coach, players, pendingRequests: initialPending } = data;
+  const [pendingRequests, setPendingRequests] = useState(initialPending || []);
+
+  const handleApprove = async (linkId) => {
+    try {
+      await api.put(`/players/coach/requests/${linkId}/approve`);
+      setPendingRequests(prev => prev.filter(r => r.linkId !== linkId));
+    } catch (err) {
+      alert('Failed to approve request');
+    }
+  };
+
+  const handleReject = async (linkId) => {
+    if (!confirm('Reject this player request?')) return;
+    try {
+      await api.put(`/players/coach/requests/${linkId}/reject`);
+      setPendingRequests(prev => prev.filter(r => r.linkId !== linkId));
+    } catch (err) {
+      alert('Failed to reject request');
+    }
+  };
 
   return (
     <>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard label="Level" value={coach.certification} color="blue" />
         <StatCard label="Experience" value={`${coach.experience} yrs`} color="green" />
         <StatCard label="Players" value={players.length} color="purple" />
+        <StatCard label="Pending" value={pendingRequests.length} color="yellow" />
       </div>
+
+      {/* Pending Requests */}
+      {pendingRequests.length > 0 && (
+        <div className="card mb-6 border-l-4 border-yellow-400">
+          <h2 className="text-xl font-bold mb-4 text-yellow-700">Pending Player Requests</h2>
+          <div className="divide-y">
+            {pendingRequests.map(r => (
+              <div key={r.linkId} className="py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-yellow-100 text-yellow-700 flex items-center justify-center font-bold">
+                    {r.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="font-semibold">{r.name}</p>
+                    <p className="text-sm text-gray-500">
+                      Rank #{r.ranking} · ELO {parseFloat(r.eloRating || 1500).toFixed(0)}
+                    </p>
+                    <p className="text-xs text-gray-400">Requested {new Date(r.requestedAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => handleApprove(r.linkId)} className="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1.5 rounded font-semibold">
+                    Approve
+                  </button>
+                  <button onClick={() => handleReject(r.linkId)} className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded font-semibold">
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="card">
         <h2 className="text-xl font-bold mb-4">My Players</h2>

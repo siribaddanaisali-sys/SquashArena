@@ -17,6 +17,9 @@ import Activity from './Activity.js';
 import Discipline from './Discipline.js';
 import TrainingPlan from './TrainingPlan.js';
 import Region from './Region.js';
+import AuditLog from './AuditLog.js';
+import ApprovalRequest from './ApprovalRequest.js';
+import SuperAdminTransfer from './SuperAdminTransfer.js';
 
 // User associations
 User.hasOne(Player, { foreignKey: 'userId' });
@@ -34,6 +37,10 @@ Tournament.belongsTo(Region, { foreignKey: 'regionId', as: 'region' });
 // Player-Coach associations
 Player.belongsToMany(Coach, { through: PlayerCoach, foreignKey: 'playerId' });
 Coach.belongsToMany(Player, { through: PlayerCoach, foreignKey: 'coachId' });
+PlayerCoach.belongsTo(Coach, { foreignKey: 'coachId' });
+PlayerCoach.belongsTo(Player, { foreignKey: 'playerId' });
+Coach.hasMany(PlayerCoach, { foreignKey: 'coachId' });
+Player.hasMany(PlayerCoach, { foreignKey: 'playerId' });
 
 // Match associations
 Match.belongsTo(Player, { as: 'player1', foreignKey: 'player1Id' });
@@ -100,6 +107,19 @@ TrainingPlan.belongsTo(Player, { foreignKey: 'playerId', as: 'player' });
 Coach.hasMany(TrainingPlan, { foreignKey: 'coachId', as: 'trainingPlans' });
 Player.hasMany(TrainingPlan, { foreignKey: 'playerId', as: 'trainingPlans' });
 
+// AuditLog associations
+AuditLog.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+User.hasMany(AuditLog, { foreignKey: 'userId', as: 'auditLogs' });
+
+// ApprovalRequest associations
+ApprovalRequest.belongsTo(User, { foreignKey: 'userId', as: 'requester' });
+ApprovalRequest.belongsTo(User, { foreignKey: 'reviewedBy', as: 'reviewer' });
+User.hasMany(ApprovalRequest, { foreignKey: 'userId', as: 'approvalRequests' });
+
+// SuperAdminTransfer associations
+SuperAdminTransfer.belongsTo(User, { foreignKey: 'fromUserId', as: 'fromUser' });
+SuperAdminTransfer.belongsTo(User, { foreignKey: 'toUserId', as: 'toUser' });
+
 export {
   User,
   Player,
@@ -120,4 +140,7 @@ export {
   Discipline,
   TrainingPlan,
   Region,
+  AuditLog,
+  ApprovalRequest,
+  SuperAdminTransfer,
 };

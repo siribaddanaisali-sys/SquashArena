@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squash Arena - Database ER Diagram</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; color: #333; }
+
+  /* Top bar */
+  #topbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 48px; z-index: 100;
+    background: #3b6db5; border-bottom: 1px solid #2a5a9c;
+    display: flex; align-items: center; padding: 0 16px; gap: 12px;
+  }
+  #topbar h1 { font-size: 15px; color: #fff; font-weight: 700; }
+  #topbar .badge { background: rgba(255,255,255,0.2); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 10px; }
+  #topbar .controls { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  #topbar button {
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff;
+    padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;
+  }
+  #topbar button:hover { background: rgba(255,255,255,0.25); }
+  #topbar .zoom-display { color: rgba(255,255,255,0.8); font-size: 12px; min-width: 40px; text-align: center; }
+
+  /* Legend */
+  #legend {
+    position: fixed; bottom: 16px; left: 16px; z-index: 100;
+    background: #fff; border: 1px solid #bbb; border-radius: 6px;
+    padding: 12px 16px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  #legend h3 { color: #3b6db5; font-size: 12px; margin-bottom: 8px; font-weight: 700; }
+  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; color: #333; }
+
+  /* Mini map */
+  #minimap {
+    position: fixed; bottom: 16px; right: 16px; z-index: 100;
+    width: 200px; height: 150px;
+    background: #f8f8f8; border: 1px solid #bbb; border-radius: 6px;
+    overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  #minimap canvas { width: 100%; height: 100%; }
+  #minimap .viewport {
+    position: absolute; border: 2px solid #3b6db5; background: rgba(59,109,181,0.08);
+    pointer-events: none;
+  }
+
+  /* Canvas area */
+  #canvas-container {
+    position: fixed; top: 48px; left: 0; right: 0; bottom: 0;
+    overflow: hidden; cursor: grab; background: #f0f0f0;
+  }
+  #canvas-container.grabbing { cursor: grabbing; }
+  #canvas {
+    position: absolute; top: 0; left: 0;
+    transform-origin: 0 0;
+  }
+
+  /* Table cards — MySQL Workbench style */
+  .table-card {
+    position: absolute;
+    background: #fff;
+    border: 1.5px solid #888;
+    border-radius: 3px;
+    min-width: 200px;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.15);
+    user-select: none;
+    z-index: 10;
+  }
+  .table-card:hover { box-shadow: 3px 3px 10px rgba(0,0,0,0.25); }
+  .table-card.dragging { z-index: 999; box-shadow: 4px 4px 14px rgba(0,0,0,0.3); }
+  .table-header {
+    padding: 6px 10px;
+    border-radius: 2px 2px 0 0;
+    font-weight: 700; font-size: 12px;
+    display: flex; align-items: center; gap: 6px;
+    cursor: move; color: #fff;
+    border-bottom: 1.5px solid #888;
+  }
+  .table-header .icon { font-size: 13px; }
+  .table-header .count { margin-left: auto; font-size: 10px; font-weight: 400; opacity: 0.85; }
+  .table-columns { padding: 2px 0; }
+  .col-row {
+    padding: 2px 8px; font-size: 11px;
+    display: flex; align-items: center; gap: 5px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  .col-row:last-child { border-bottom: none; }
+  .col-row:hover { background: #f0f7ff; }
+  .col-badge {
+    font-size: 7px; font-weight: 700; padding: 1px 3px; border-radius: 2px;
+    text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;
+  }
+  .col-badge.pk { background: #fef3c7; color: #92400e; border: 1px solid #d97706; }
+  .col-badge.fk { background: #fce7f3; color: #9d174d; border: 1px solid #db2777; }
+  .col-badge.uq { background: #e0f2fe; color: #0369a1; border: 1px solid #0284c7; }
+  .col-badge.nn { background: #fee2e2; color: #991b1b; border: 1px solid #dc2626; }
+  .col-name { color: #222; flex: 1; }
+  .col-type { color: #888; font-size: 10px; text-align: right; }
+
+  /* Relationship SVG — rendered BEHIND table cards */
+  #relationships {
+    position: absolute; top: 0; left: 0;
+    pointer-events: none; z-index: 1;
+    overflow: visible;
+  }
+
+  /* Tooltip */
+  #tooltip {
+    position: fixed; z-index: 200; display: none;
+    background: #fff; border: 1px solid #aaa; border-radius: 4px;
+    padding: 6px 10px; font-size: 11px; max-width: 260px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); color: #333;
+  }
+</style>
+</head>
+<body>
+<div id="topbar">
+  <h1>🏸 Squash Arena — ER Diagram</h1>
+  <span class="badge">19 Tables</span>
+  <div class="controls">
+    <button onclick="zoomIn()">＋</button>
+    <span class="zoom-display" id="zoomDisplay">100%</span>
+    <button onclick="zoomOut()">−</button>
+    <button onclick="resetView()">Reset</button>
+    <button onclick="autoLayout()">Auto Layout</button>
+  </div>
+</div>
+
+<div id="canvas-container">
+  <div id="canvas"></div>
+</div>
+
+<div id="legend">
+  <h3>NOTATION</h3>
+  <div class="legend-item">
+    <svg width="80" height="24" viewBox="0 0 80 24">
+      <line x1="10" y1="12" x2="70" y2="12" stroke="#555" stroke-width="1.5"/>
+      <line x1="14" y1="4" x2="14" y2="20" stroke="#555" stroke-width="2.5"/>
+      <line x1="20" y1="4" x2="20" y2="20" stroke="#555" stroke-width="2.5"/>
+      <line x1="60" y1="4" x2="60" y2="20" stroke="#555" stroke-width="2.5"/>
+      <line x1="66" y1="4" x2="66" y2="20" stroke="#555" stroke-width="2.5"/>
+    </svg>
+    <span>One-to-One  (1:1)</span>
+  </div>
+  <div class="legend-item">
+    <svg width="80" height="24" viewBox="0 0 80 24">
+      <line x1="10" y1="12" x2="70" y2="12" stroke="#555" stroke-width="1.5"/>
+      <line x1="14" y1="4" x2="14" y2="20" stroke="#555" stroke-width="2.5"/>
+      <line x1="20" y1="4" x2="20" y2="20" stroke="#555" stroke-width="2.5"/>
+      <line x1="70" y1="3" x2="55" y2="12" stroke="#555" stroke-width="2.5"/>
+      <line x1="70" y1="12" x2="55" y2="12" stroke="#555" stroke-width="2.5"/>
+      <line x1="70" y1="21" x2="55" y2="12" stroke="#555" stroke-width="2.5"/>
+    </svg>
+    <span>One-to-Many  (1:N)</span>
+  </div>
+  <div class="legend-item">
+    <svg width="80" height="24" viewBox="0 0 80 24">
+      <line x1="10" y1="12" x2="70" y2="12" stroke="#555" stroke-width="1.5"/>
+      <line x1="10" y1="3" x2="25" y2="12" stroke="#555" stroke-width="2.5"/>
+      <line x1="10" y1="12" x2="25" y2="12" stroke="#555" stroke-width="2.5"/>
+      <line x1="10" y1="21" x2="25" y2="12" stroke="#555" stroke-width="2.5"/>
+      <line x1="70" y1="3" x2="55" y2="12" stroke="#555" stroke-width="2.5"/>
+      <line x1="70" y1="12" x2="55" y2="12" stroke="#555" stroke-width="2.5"/>
+      <line x1="70" y1="21" x2="55" y2="12" stroke="#555" stroke-width="2.5"/>
+    </svg>
+    <span>Many-to-Many  (M:N)</span>
+  </div>
+  <div style="margin-top:6px;border-top:1px solid #ddd;padding-top:6px;"></div>
+  <div class="legend-item"><div style="width:10px;height:10px;border-radius:50%;background:#d97706;"></div><span>Primary Key</span></div>
+  <div class="legend-item"><div style="width:10px;height:10px;border-radius:50%;background:#db2777;"></div><span>Foreign Key</span></div>
+</div>
+
+<div id="minimap"><canvas id="minimapCanvas"></canvas><div class="viewport" id="minimapViewport"></div></div>
+
+<div id="tooltip"></div>
+
+<script>
+// ============================================================
+// SCHEMA DATA
+// ============================================================
+const tables = [
+  {
+    name: 'users', icon: '👤', color: '#3b6db5',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'email', type: 'STRING', nn: true, uq: true },
+      { name: 'password', type: 'STRING', nn: true },
+      { name: 'firstName', type: 'STRING', nn: true },
+      { name: 'lastName', type: 'STRING', nn: true },
+      { name: 'role', type: 'ENUM', nn: true },
+      { name: 'regionId', type: 'UUID', fk: 'regions.id' },
+      { name: 'profilePicture', type: 'STRING' },
+      { name: 'isActive', type: 'BOOLEAN' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'players', icon: '🎾', color: '#2e7d32',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'userId', type: 'UUID', nn: true, fk: 'users.id' },
+      { name: 'ranking', type: 'INTEGER' },
+      { name: 'points', type: 'DECIMAL(10,2)' },
+      { name: 'eloRating', type: 'DECIMAL(10,2)' },
+      { name: 'wins', type: 'INTEGER' },
+      { name: 'losses', type: 'INTEGER' },
+      { name: 'hand', type: 'ENUM' },
+      { name: 'nationality', type: 'STRING' },
+      { name: 'bio', type: 'TEXT' },
+      { name: 'status', type: 'ENUM' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'coaches', icon: '🏋️', color: '#7b1fa2',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'userId', type: 'UUID', nn: true, fk: 'users.id' },
+      { name: 'certification', type: 'STRING' },
+      { name: 'experience', type: 'INTEGER' },
+      { name: 'specialization', type: 'STRING' },
+      { name: 'bio', type: 'TEXT' },
+      { name: 'status', type: 'ENUM' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'player_coaches', icon: '🤝', color: '#e65100',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'playerId', type: 'UUID', nn: true, fk: 'players.id' },
+      { name: 'coachId', type: 'UUID', nn: true, fk: 'coaches.id' },
+      { name: 'startDate', type: 'DATE' },
+      { name: 'endDate', type: 'DATE' },
+      { name: 'status', type: 'ENUM' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'regions', icon: '🌍', color: '#0277bd',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'name', type: 'STRING', nn: true, uq: true },
+      { name: 'code', type: 'STRING(10)', nn: true, uq: true },
+      { name: 'continent', type: 'STRING' },
+      { name: 'status', type: 'ENUM' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'tournaments', icon: '🏆', color: '#c62828',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'name', type: 'STRING', nn: true },
+      { name: 'description', type: 'TEXT' },
+      { name: 'startDate', type: 'DATE', nn: true },
+      { name: 'endDate', type: 'DATE', nn: true },
+      { name: 'category', type: 'ENUM' },
+      { name: 'status', type: 'ENUM' },
+      { name: 'location', type: 'STRING' },
+      { name: 'maxParticipants', type: 'INTEGER' },
+      { name: 'registeredParticipants', type: 'INTEGER' },
+      { name: 'drawType', type: 'ENUM' },
+      { name: 'registrationOpen', type: 'BOOLEAN' },
+      { name: 'registrationDeadline', type: 'DATE' },
+      { name: 'prizePool', type: 'DECIMAL(10,2)' },
+      { name: 'organizerId', type: 'UUID', nn: true, fk: 'users.id' },
+      { name: 'regionId', type: 'UUID', fk: 'regions.id' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'tournament_registrations', icon: '📋', color: '#ad1457',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'tournamentId', type: 'UUID', nn: true, fk: 'tournaments.id' },
+      { name: 'playerId', type: 'UUID', nn: true, fk: 'players.id' },
+      { name: 'seedNumber', type: 'INTEGER' },
+      { name: 'status', type: 'ENUM' },
+      { name: 'registeredAt', type: 'DATE' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'tournament_draws', icon: '🗂️', color: '#d84315',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'tournamentId', type: 'UUID', nn: true, fk: 'tournaments.id' },
+      { name: 'drawType', type: 'ENUM' },
+      { name: 'totalRounds', type: 'INTEGER', nn: true },
+      { name: 'bracketData', type: 'JSON' },
+      { name: 'status', type: 'ENUM' },
+      { name: 'generatedAt', type: 'DATE' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'matches', icon: '⚔️', color: '#00695c',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'tournamentId', type: 'UUID', nn: true, fk: 'tournaments.id' },
+      { name: 'player1Id', type: 'UUID', nn: true, fk: 'players.id' },
+      { name: 'player2Id', type: 'UUID', nn: true, fk: 'players.id' },
+      { name: 'winnerId', type: 'UUID' },
+      { name: 'score', type: 'JSON' },
+      { name: 'status', type: 'ENUM' },
+      { name: 'scheduledTime', type: 'DATE', nn: true },
+      { name: 'courtId', type: 'UUID' },
+      { name: 'roundNumber', type: 'INTEGER' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'rankings', icon: '📊', color: '#f57f17',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'playerId', type: 'UUID', nn: true, fk: 'players.id' },
+      { name: 'rank', type: 'INTEGER', nn: true },
+      { name: 'points', type: 'DECIMAL(10,2)' },
+      { name: 'category', type: 'ENUM' },
+      { name: 'lastUpdated', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'player_elo_history', icon: '📈', color: '#558b2f',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'playerId', type: 'UUID', nn: true, fk: 'players.id' },
+      { name: 'matchId', type: 'UUID', nn: true, fk: 'matches.id' },
+      { name: 'oldRating', type: 'DECIMAL(10,2)', nn: true },
+      { name: 'newRating', type: 'DECIMAL(10,2)', nn: true },
+      { name: 'ratingChange', type: 'DECIMAL(10,2)', nn: true },
+      { name: 'opponentId', type: 'UUID', nn: true },
+      { name: 'opponentRating', type: 'DECIMAL(10,2)', nn: true },
+      { name: 'result', type: 'ENUM', nn: true },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'venues', icon: '🏟️', color: '#546e7a',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'name', type: 'STRING', nn: true },
+      { name: 'city', type: 'STRING', nn: true },
+      { name: 'country', type: 'STRING', nn: true },
+      { name: 'address', type: 'STRING' },
+      { name: 'numCourts', type: 'INTEGER' },
+      { name: 'contactPhone', type: 'STRING' },
+      { name: 'contactEmail', type: 'STRING' },
+      { name: 'status', type: 'ENUM' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'courts', icon: '🏸', color: '#6a1b9a',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'venueId', type: 'UUID', nn: true, fk: 'venues.id' },
+      { name: 'courtNumber', type: 'INTEGER', nn: true },
+      { name: 'courtName', type: 'STRING' },
+      { name: 'courtType', type: 'ENUM' },
+      { name: 'status', type: 'ENUM' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'clubs', icon: '🏠', color: '#0277bd',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'name', type: 'STRING', nn: true },
+      { name: 'description', type: 'TEXT' },
+      { name: 'city', type: 'STRING', nn: true },
+      { name: 'country', type: 'STRING', nn: true },
+      { name: 'address', type: 'STRING' },
+      { name: 'website', type: 'STRING' },
+      { name: 'contactEmail', type: 'STRING' },
+      { name: 'contactPhone', type: 'STRING' },
+      { name: 'logo', type: 'STRING' },
+      { name: 'memberCount', type: 'INTEGER' },
+      { name: 'foundedYear', type: 'INTEGER' },
+      { name: 'status', type: 'ENUM' },
+      { name: 'ownerId', type: 'UUID', nn: true, fk: 'users.id' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'club_memberships', icon: '🎫', color: '#8e24aa',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'clubId', type: 'UUID', nn: true, fk: 'clubs.id' },
+      { name: 'userId', type: 'UUID', nn: true, fk: 'users.id' },
+      { name: 'role', type: 'ENUM' },
+      { name: 'status', type: 'ENUM' },
+      { name: 'joinedAt', type: 'DATE' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'activities', icon: '📰', color: '#d32f2f',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'type', type: 'ENUM', nn: true },
+      { name: 'title', type: 'STRING', nn: true },
+      { name: 'description', type: 'TEXT' },
+      { name: 'userId', type: 'UUID', fk: 'users.id' },
+      { name: 'metadata', type: 'JSON' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'notifications', icon: '🔔', color: '#283593',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'userId', type: 'UUID', nn: true, fk: 'users.id' },
+      { name: 'type', type: 'ENUM' },
+      { name: 'title', type: 'STRING', nn: true },
+      { name: 'message', type: 'TEXT', nn: true },
+      { name: 'link', type: 'STRING' },
+      { name: 'isRead', type: 'BOOLEAN' },
+      { name: 'metadata', type: 'JSON' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'disciplines', icon: '⚖️', color: '#b71c1c',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'playerId', type: 'UUID', nn: true, fk: 'players.id' },
+      { name: 'issuedBy', type: 'UUID', nn: true, fk: 'users.id' },
+      { name: 'type', type: 'ENUM', nn: true },
+      { name: 'reason', type: 'TEXT', nn: true },
+      { name: 'tournamentId', type: 'UUID', fk: 'tournaments.id' },
+      { name: 'matchId', type: 'UUID', fk: 'matches.id' },
+      { name: 'startDate', type: 'DATE' },
+      { name: 'endDate', type: 'DATE' },
+      { name: 'status', type: 'ENUM' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+  {
+    name: 'training_plans', icon: '📝', color: '#2e7d32',
+    columns: [
+      { name: 'id', type: 'UUID', pk: true },
+      { name: 'coachId', type: 'UUID', nn: true, fk: 'coaches.id' },
+      { name: 'playerId', type: 'UUID', nn: true, fk: 'players.id' },
+      { name: 'title', type: 'STRING', nn: true },
+      { name: 'description', type: 'TEXT' },
+      { name: 'category', type: 'ENUM' },
+      { name: 'startDate', type: 'DATEONLY', nn: true },
+      { name: 'endDate', type: 'DATEONLY' },
+      { name: 'exercises', type: 'TEXT' },
+      { name: 'status', type: 'ENUM' },
+      { name: 'createdAt', type: 'DATE' },
+      { name: 'updatedAt', type: 'DATE' },
+    ]
+  },
+];
+
+// Relationships
+const relationships = [
+  { from: 'users', to: 'regions', fromCol: 'regionId', toCol: 'id', type: '1:N', label: 'belongs to' },
+  { from: 'players', to: 'users', fromCol: 'userId', toCol: 'id', type: '1:1', label: 'is a' },
+  { from: 'coaches', to: 'users', fromCol: 'userId', toCol: 'id', type: '1:1', label: 'is a' },
+  { from: 'tournaments', to: 'users', fromCol: 'organizerId', toCol: 'id', type: '1:N', label: 'organized by' },
+  { from: 'clubs', to: 'users', fromCol: 'ownerId', toCol: 'id', type: '1:N', label: 'owned by' },
+  { from: 'club_memberships', to: 'users', fromCol: 'userId', toCol: 'id', type: '1:N', label: 'member' },
+  { from: 'notifications', to: 'users', fromCol: 'userId', toCol: 'id', type: '1:N', label: 'notifies' },
+  { from: 'activities', to: 'users', fromCol: 'userId', toCol: 'id', type: '1:N', label: 'actor' },
+  { from: 'disciplines', to: 'users', fromCol: 'issuedBy', toCol: 'id', type: '1:N', label: 'issued by' },
+  { from: 'tournaments', to: 'regions', fromCol: 'regionId', toCol: 'id', type: '1:N', label: 'in region' },
+  { from: 'player_coaches', to: 'players', fromCol: 'playerId', toCol: 'id', type: 'M:N', label: 'player' },
+  { from: 'player_coaches', to: 'coaches', fromCol: 'coachId', toCol: 'id', type: 'M:N', label: 'coach' },
+  { from: 'matches', to: 'players', fromCol: 'player1Id', toCol: 'id', type: '1:N', label: 'player 1' },
+  { from: 'matches', to: 'players', fromCol: 'player2Id', toCol: 'id', type: '1:N', label: 'player 2' },
+  { from: 'rankings', to: 'players', fromCol: 'playerId', toCol: 'id', type: '1:N', label: 'ranked' },
+  { from: 'tournament_registrations', to: 'players', fromCol: 'playerId', toCol: 'id', type: '1:N', label: 'registered' },
+  { from: 'player_elo_history', to: 'players', fromCol: 'playerId', toCol: 'id', type: '1:N', label: 'elo of' },
+  { from: 'disciplines', to: 'players', fromCol: 'playerId', toCol: 'id', type: '1:N', label: 'disciplined' },
+  { from: 'training_plans', to: 'players', fromCol: 'playerId', toCol: 'id', type: '1:N', label: 'for player' },
+  { from: 'training_plans', to: 'coaches', fromCol: 'coachId', toCol: 'id', type: '1:N', label: 'by coach' },
+  { from: 'matches', to: 'tournaments', fromCol: 'tournamentId', toCol: 'id', type: '1:N', label: 'in tournament' },
+  { from: 'tournament_registrations', to: 'tournaments', fromCol: 'tournamentId', toCol: 'id', type: '1:N', label: 'for tournament' },
+  { from: 'tournament_draws', to: 'tournaments', fromCol: 'tournamentId', toCol: 'id', type: '1:1', label: 'draw for' },
+  { from: 'disciplines', to: 'tournaments', fromCol: 'tournamentId', toCol: 'id', type: '1:N', label: 'at tournament' },
+  { from: 'player_elo_history', to: 'matches', fromCol: 'matchId', toCol: 'id', type: '1:N', label: 'from match' },
+  { from: 'disciplines', to: 'matches', fromCol: 'matchId', toCol: 'id', type: '1:N', label: 'during match' },
+  { from: 'courts', to: 'venues', fromCol: 'venueId', toCol: 'id', type: '1:N', label: 'at venue' },
+  { from: 'club_memberships', to: 'clubs', fromCol: 'clubId', toCol: 'id', type: '1:N', label: 'of club' },
+];
+
+// Layout — wide spacing to avoid line overlaps (like MySQL Workbench)
+const layout = {
+  // Column 1: notifications, activities (far left)
+  'notifications':           { x: 0,    y: 0 },
+  'activities':              { x: 0,    y: 420 },
+
+  // Column 2: users, regions, clubs, club_memberships
+  'users':                   { x: 420,  y: 0 },
+  'regions':                 { x: 420,  y: 500 },
+  'clubs':                   { x: 420,  y: 820 },
+  'club_memberships':        { x: 420,  y: 1200 },
+
+  // Column 3: players, coaches, player_coaches, training_plans
+  'players':                 { x: 900,  y: 0 },
+  'coaches':                 { x: 900,  y: 520 },
+  'player_coaches':          { x: 900,  y: 920 },
+  'training_plans':          { x: 900,  y: 1250 },
+
+  // Column 4: tournaments, tournament_registrations
+  'tournaments':             { x: 1400, y: 0 },
+  'tournament_registrations':{ x: 1400, y: 680 },
+
+  // Column 5: tournament_draws, matches, venues, courts
+  'tournament_draws':        { x: 1880, y: 0 },
+  'matches':                 { x: 1880, y: 380 },
+  'venues':                  { x: 1880, y: 900 },
+  'courts':                  { x: 1880, y: 1250 },
+
+  // Column 6: rankings, elo history, disciplines (far right)
+  'rankings':                { x: 2360, y: 0 },
+  'player_elo_history':      { x: 2360, y: 300 },
+  'disciplines':             { x: 2360, y: 720 },
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let scale = 0.45, panX = 100, panY = 60;
+let dragging = null, dragStartX, dragStartY, dragOrigX, dragOrigY;
+let panning = false, panStartX, panStartY, panOrigX, panOrigY;
+const tableEls = {};
+const tablePositions = {};
+
+// ============================================================
+// RENDER TABLES
+// ============================================================
+const canvas = document.getElementById('canvas');
+
+tables.forEach(t => {
+  const pos = layout[t.name] || { x: 0, y: 0 };
+  tablePositions[t.name] = { ...pos };
+
+  const card = document.createElement('div');
+  card.className = 'table-card';
+  card.id = 'table-' + t.name;
+  card.style.left = pos.x + 'px';
+  card.style.top = pos.y + 'px';
+
+  const header = document.createElement('div');
+  header.className = 'table-header';
+  header.style.background = t.color;
+  header.innerHTML = `<span class="icon">${t.icon}</span> ${t.name} <span class="count">${t.columns.length} cols</span>`;
+  card.appendChild(header);
+
+  const colDiv = document.createElement('div');
+  colDiv.className = 'table-columns';
+  t.columns.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'col-row';
+    let badges = '';
+    if (c.pk) badges += '<span class="col-badge pk">PK</span>';
+    if (c.fk) badges += '<span class="col-badge fk">FK</span>';
+    if (c.uq) badges += '<span class="col-badge uq">UQ</span>';
+    if (c.nn && !c.pk) badges += '<span class="col-badge nn">NN</span>';
+    row.innerHTML = `${badges}<span class="col-name">${c.name}</span><span class="col-type">${c.type}</span>`;
+    if (c.fk) {
+      row.style.cursor = 'pointer';
+      row.addEventListener('mouseenter', e => showTooltip(e, `Foreign Key → ${c.fk}`));
+      row.addEventListener('mouseleave', hideTooltip);
+    }
+    colDiv.appendChild(row);
+  });
+  card.appendChild(colDiv);
+
+  header.addEventListener('mousedown', e => {
+    e.preventDefault();
+    dragging = t.name;
+    card.classList.add('dragging');
+    card.style.zIndex = 999;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    dragOrigX = tablePositions[t.name].x;
+    dragOrigY = tablePositions[t.name].y;
+  });
+
+  canvas.appendChild(card);
+  tableEls[t.name] = card;
+});
+
+// Create SVG on top of table cards
+const relSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+relSvg.id = 'relationships';
+canvas.appendChild(relSvg);
+
+// ============================================================
+// PANNING & DRAGGING
+// ============================================================
+const container = document.getElementById('canvas-container');
+
+container.addEventListener('mousedown', e => {
+  if (dragging) return;
+  if (e.target.closest('.table-card')) return;
+  panning = true;
+  container.classList.add('grabbing');
+  panStartX = e.clientX;
+  panStartY = e.clientY;
+  panOrigX = panX;
+  panOrigY = panY;
+});
+
+window.addEventListener('mousemove', e => {
+  if (dragging) {
+    const dx = (e.clientX - dragStartX) / scale;
+    const dy = (e.clientY - dragStartY) / scale;
+    tablePositions[dragging].x = dragOrigX + dx;
+    tablePositions[dragging].y = dragOrigY + dy;
+    tableEls[dragging].style.left = tablePositions[dragging].x + 'px';
+    tableEls[dragging].style.top = tablePositions[dragging].y + 'px';
+    drawRelationships();
+    updateMinimap();
+  }
+  if (panning) {
+    panX = panOrigX + (e.clientX - panStartX);
+    panY = panOrigY + (e.clientY - panStartY);
+    applyTransform();
+    updateMinimap();
+  }
+});
+
+window.addEventListener('mouseup', () => {
+  if (dragging) {
+    tableEls[dragging].classList.remove('dragging');
+    tableEls[dragging].style.zIndex = '';
+    dragging = null;
+    drawRelationships();
+  }
+  panning = false;
+  container.classList.remove('grabbing');
+});
+
+container.addEventListener('wheel', e => {
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.05 : 0.05;
+  const newScale = Math.max(0.2, Math.min(2, scale + delta));
+  const rect = container.getBoundingClientRect();
+  const cx = e.clientX - rect.left;
+  const cy = e.clientY - rect.top;
+  panX = cx - (cx - panX) * (newScale / scale);
+  panY = cy - (cy - panY) * (newScale / scale);
+  scale = newScale;
+  applyTransform();
+  updateMinimap();
+}, { passive: false });
+
+function applyTransform() {
+  canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+  document.getElementById('zoomDisplay').textContent = Math.round(scale * 100) + '%';
+}
+
+function zoomIn() { scale = Math.min(2, scale + 0.1); applyTransform(); updateMinimap(); }
+function zoomOut() { scale = Math.max(0.2, scale - 0.1); applyTransform(); updateMinimap(); }
+function resetView() { scale = 0.45; panX = 100; panY = 60; applyTransform(); drawRelationships(); updateMinimap(); }
+function autoLayout() {
+  Object.keys(layout).forEach(name => {
+    tablePositions[name] = { ...layout[name] };
+    if (tableEls[name]) {
+      tableEls[name].style.left = layout[name].x + 'px';
+      tableEls[name].style.top = layout[name].y + 'px';
+    }
+  });
+  resetView();
+}
+
+// ============================================================
+// DRAW RELATIONSHIPS — dark lines on white background
+// ============================================================
+function getAnchor(tableName, colName, side) {
+  const el = tableEls[tableName];
+  if (!el) return { x: 0, y: 0 };
+  const pos = tablePositions[tableName];
+  const w = el.offsetWidth;
+  const headerH = el.querySelector('.table-header').offsetHeight;
+  const table = tables.find(t => t.name === tableName);
+  const colIdx = table ? table.columns.findIndex(c => c.name === colName) : 0;
+  const rowH = 20;
+  const cy = pos.y + headerH + 2 + colIdx * rowH + rowH / 2;
+  if (side === 'left') return { x: pos.x, y: cy };
+  if (side === 'right') return { x: pos.x + w, y: cy };
+  return { x: pos.x + w / 2, y: cy };
+}
+
+function drawRelationships() {
+  const svg = document.getElementById('relationships');
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  Object.keys(tablePositions).forEach(name => {
+    const p = tablePositions[name];
+    const el = tableEls[name];
+    if (!el) return;
+    minX = Math.min(minX, p.x - 60);
+    minY = Math.min(minY, p.y - 60);
+    maxX = Math.max(maxX, p.x + el.offsetWidth + 60);
+    maxY = Math.max(maxY, p.y + el.offsetHeight + 60);
+  });
+  const svgW = maxX - minX + 200;
+  const svgH = maxY - minY + 200;
+  svg.setAttribute('width', svgW);
+  svg.setAttribute('height', svgH);
+  svg.style.width = svgW + 'px';
+  svg.style.height = svgH + 'px';
+  svg.style.left = (minX - 100) + 'px';
+  svg.style.top = (minY - 100) + 'px';
+  const ox = -(minX - 100);
+  const oy = -(minY - 100);
+
+  const LINE_COLOR = '#555';
+  const LINE_WIDTH = 1.5;
+  const SYMBOL_WIDTH = 2.5;
+
+  let html = '';
+
+  // "One" notation — two vertical bars near the connection point
+  function drawOneSym(x, y, dir) {
+    const h = 10;
+    const bar1 = x + dir * 10;
+    const bar2 = x + dir * 18;
+    return `<line x1="${bar1}" y1="${y - h}" x2="${bar1}" y2="${y + h}" stroke="${LINE_COLOR}" stroke-width="${SYMBOL_WIDTH}" stroke-linecap="round"/>` +
+           `<line x1="${bar2}" y1="${y - h}" x2="${bar2}" y2="${y + h}" stroke="${LINE_COLOR}" stroke-width="${SYMBOL_WIDTH}" stroke-linecap="round"/>`;
+  }
+
+  // "Many" notation — crow's foot (3 lines converging to a point)
+  function drawManySym(x, y, dir) {
+    const h = 12;
+    const tipX = x + dir * 10;
+    const forkX = x + dir * 26;
+    return `<line x1="${forkX}" y1="${y - h}" x2="${tipX}" y2="${y}" stroke="${LINE_COLOR}" stroke-width="${SYMBOL_WIDTH}" stroke-linecap="round"/>` +
+           `<line x1="${forkX}" y1="${y}"     x2="${tipX}" y2="${y}" stroke="${LINE_COLOR}" stroke-width="${SYMBOL_WIDTH}" stroke-linecap="round"/>` +
+           `<line x1="${forkX}" y1="${y + h}" x2="${tipX}" y2="${y}" stroke="${LINE_COLOR}" stroke-width="${SYMBOL_WIDTH}" stroke-linecap="round"/>`;
+  }
+
+  relationships.forEach((r, ri) => {
+    const fromEl = tableEls[r.from];
+    const toEl = tableEls[r.to];
+    if (!fromEl || !toEl) return;
+
+    const fromPos = tablePositions[r.from];
+    const toPos = tablePositions[r.to];
+    const fromW = fromEl.offsetWidth;
+    const toW = toEl.offsetWidth;
+    const fromCenterX = fromPos.x + fromW / 2;
+    const toCenterX = toPos.x + toW / 2;
+
+    let fromSide, toSide;
+    if (fromCenterX < toCenterX) { fromSide = 'right'; toSide = 'left'; }
+    else { fromSide = 'left'; toSide = 'right'; }
+
+    const p1 = getAnchor(r.from, r.fromCol, fromSide);
+    const p2 = getAnchor(r.to, r.toCol, toSide);
+    const ax1 = p1.x + ox, ay1 = p1.y + oy;
+    const ax2 = p2.x + ox, ay2 = p2.y + oy;
+
+    // Smooth bezier curves with unique offsets per relationship
+    // Use a per-relationship offset so parallel lines spread apart
+    const dist = Math.abs(ax2 - ax1);
+    const baseCP = Math.min(dist * 0.35, 160);
+    // Stagger control points: use relationship index to offset vertically
+    const vertSpread = (ri % 7 - 3) * 12;
+
+    const cp1x = ax1 + (fromSide === 'right' ? baseCP : -baseCP);
+    const cp1y = ay1 + vertSpread;
+    const cp2x = ax2 + (toSide === 'right' ? baseCP : -baseCP);
+    const cp2y = ay2 - vertSpread;
+
+    // Draw smooth curve
+    html += `<path d="M${ax1},${ay1} C${cp1x},${cp1y} ${cp2x},${cp2y} ${ax2},${ay2}" fill="none" stroke="${LINE_COLOR}" stroke-width="${LINE_WIDTH}"/>`;
+
+    // Draw notation symbols
+    const fromDir = (fromSide === 'right') ? 1 : -1;
+    const toDir = (toSide === 'right') ? 1 : -1;
+
+    if (r.type === '1:1') {
+      html += drawOneSym(ax1, ay1, fromDir);
+      html += drawOneSym(ax2, ay2, toDir);
+    } else if (r.type === '1:N') {
+      html += drawManySym(ax1, ay1, fromDir);
+      html += drawOneSym(ax2, ay2, toDir);
+    } else {
+      html += drawManySym(ax1, ay1, fromDir);
+      html += drawManySym(ax2, ay2, toDir);
+    }
+
+    // Label at midpoint of the bezier (approximate)
+    const mx = (ax1 + ax2) / 2;
+    const my = (ay1 + ay2) / 2 + vertSpread * 0.15 - 8;
+    const labelLen = r.label.length * 5.5 + 10;
+    html += `<rect x="${mx - labelLen/2}" y="${my - 9}" width="${labelLen}" height="14" rx="3" fill="#fff" fill-opacity="0.95" stroke="#ccc" stroke-width="0.5"/>`;
+    html += `<text x="${mx}" y="${my + 1}" text-anchor="middle" font-size="9" font-family="Segoe UI, sans-serif" fill="#666">${r.label}</text>`;
+  });
+
+  svg.innerHTML = html;
+}
+
+// ============================================================
+// TOOLTIP
+// ============================================================
+function showTooltip(e, text) {
+  const tt = document.getElementById('tooltip');
+  tt.innerHTML = `<div>${text}</div>`;
+  tt.style.display = 'block';
+  tt.style.left = (e.clientX + 12) + 'px';
+  tt.style.top = (e.clientY + 12) + 'px';
+}
+function hideTooltip() { document.getElementById('tooltip').style.display = 'none'; }
+
+// ============================================================
+// MINIMAP
+// ============================================================
+function updateMinimap() {
+  const mmCanvas = document.getElementById('minimapCanvas');
+  const ctx = mmCanvas.getContext('2d');
+  const mmW = 200, mmH = 150;
+  mmCanvas.width = mmW; mmCanvas.height = mmH;
+  ctx.clearRect(0, 0, mmW, mmH);
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  Object.keys(tablePositions).forEach(name => {
+    const p = tablePositions[name];
+    const el = tableEls[name];
+    if (!el) return;
+    minX = Math.min(minX, p.x);
+    minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x + el.offsetWidth);
+    maxY = Math.max(maxY, p.y + el.offsetHeight);
+  });
+
+  const pad = 40;
+  minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+  const worldW = maxX - minX || 1;
+  const worldH = maxY - minY || 1;
+  const mmScale = Math.min(mmW / worldW, mmH / worldH);
+
+  Object.keys(tablePositions).forEach(name => {
+    const p = tablePositions[name];
+    const el = tableEls[name];
+    if (!el) return;
+    const t = tables.find(tt => tt.name === name);
+    ctx.fillStyle = t ? t.color : '#888';
+    const rx = (p.x - minX) * mmScale;
+    const ry = (p.y - minY) * mmScale;
+    const rw = el.offsetWidth * mmScale;
+    const rh = el.offsetHeight * mmScale;
+    ctx.fillRect(rx, ry, Math.max(rw, 2), Math.max(rh, 2));
+  });
+
+  ctx.lineWidth = 0.5;
+  ctx.strokeStyle = '#999';
+  relationships.forEach(r => {
+    const fromEl = tableEls[r.from];
+    const toEl = tableEls[r.to];
+    if (!fromEl || !toEl) return;
+    const fp = tablePositions[r.from];
+    const tp = tablePositions[r.to];
+    ctx.beginPath();
+    ctx.moveTo((fp.x + fromEl.offsetWidth / 2 - minX) * mmScale, (fp.y + fromEl.offsetHeight / 2 - minY) * mmScale);
+    ctx.lineTo((tp.x + toEl.offsetWidth / 2 - minX) * mmScale, (tp.y + toEl.offsetHeight / 2 - minY) * mmScale);
+    ctx.stroke();
+  });
+
+  const vp = document.getElementById('minimapViewport');
+  const containerRect = container.getBoundingClientRect();
+  const vpLeft = (-panX / scale - minX) * mmScale;
+  const vpTop = (-panY / scale - minY + 48 / scale) * mmScale;
+  const vpW = (containerRect.width / scale) * mmScale;
+  const vpH = (containerRect.height / scale) * mmScale;
+  vp.style.left = Math.max(0, vpLeft) + 'px';
+  vp.style.top = Math.max(0, vpTop) + 'px';
+  vp.style.width = Math.min(mmW, vpW) + 'px';
+  vp.style.height = Math.min(mmH, vpH) + 'px';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+applyTransform();
+requestAnimationFrame(() => {
+  drawRelationships();
+  updateMinimap();
+});
+window.addEventListener('resize', () => { drawRelationships(); updateMinimap(); });
+</script>
+</body>
+</html>
